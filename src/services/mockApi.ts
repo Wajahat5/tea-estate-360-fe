@@ -363,6 +363,10 @@ export const mockApi = {
       employees[index] = { ...payload };
       return employees[index];
     },
+    async delete(employeeid: string): Promise<void> {
+      await delay(200);
+      employees = employees.filter((e) => e.employeeid !== employeeid);
+    },
     async listByGarden(gardenid: string): Promise<Employee[]> {
       await delay(200);
       return employees.filter(
@@ -383,6 +387,21 @@ export const mockApi = {
       };
       requests.push(newRequest);
       return newRequest;
+    },
+    async update(payload: MaintenanceRequest): Promise<MaintenanceRequest> {
+      await delay(300);
+      const index = requests.findIndex(
+        (r) => r.requestid === payload.requestid
+      );
+      if (index === -1) {
+        throw new Error("Request not found");
+      }
+      requests[index] = { ...requests[index], ...payload };
+      return requests[index];
+    },
+    async delete(requestid: string): Promise<void> {
+      await delay(200);
+      requests = requests.filter((r) => r.requestid !== requestid);
     },
     async listByFilters(
       gardenid: string,
@@ -447,6 +466,21 @@ export const mockApi = {
       expenses.push(newExpense);
       return newExpense;
     },
+    async update(payload: Expense): Promise<Expense> {
+      await delay(300);
+      const index = expenses.findIndex(
+        (e) => e.expenseid === payload.expenseid
+      );
+      if (index === -1) {
+        throw new Error("Expense not found");
+      }
+      expenses[index] = { ...expenses[index], ...payload };
+      return expenses[index];
+    },
+    async delete(expenseid: string): Promise<void> {
+      await delay(200);
+      expenses = expenses.filter((e) => e.expenseid !== expenseid);
+    },
     async listByFilters(
       gardenid: string,
       from: string,
@@ -487,6 +521,19 @@ export const mockApi = {
       tasks.push(task);
       return task;
     },
+    async update(payload: UpdateTaskRequest): Promise<Task> {
+      await delay(300);
+      const index = tasks.findIndex((t) => t.taskid === payload.taskid);
+      if (index === -1) {
+        throw new Error("Task not found");
+      }
+      tasks[index] = { ...payload };
+      return tasks[index];
+    },
+    async delete(taskid: string): Promise<void> {
+      await delay(200);
+      tasks = tasks.filter((t) => t.taskid !== taskid);
+    },
     async listByFilters(
       gardenid: string,
       from: string,
@@ -503,15 +550,6 @@ export const mockApi = {
           taskDate <= toDate
         );
       });
-    },
-    async update(payload: UpdateTaskRequest): Promise<Task> {
-      await delay(300);
-      const index = tasks.findIndex((t) => t.taskid === payload.taskid);
-      if (index === -1) {
-        throw new Error("Task not found");
-      }
-      tasks[index] = { ...payload };
-      return tasks[index];
     }
   },
 

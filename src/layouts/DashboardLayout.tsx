@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { config } from "../config";
 import { apiService } from "../services/apiService";
 import { auth } from "../services/auth";
+import { centralData } from "../services/centralData";
 import { clearAuth } from "../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { TeaEstateLogo } from "../ui/TeaEstateLogo";
@@ -22,6 +23,14 @@ export const DashboardLayout = () => {
   const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const isAuthenticated = centralData.initializeData();
+    if (!isAuthenticated) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
+
   const initials = user?.name
     ? user.name
         .split(" ")

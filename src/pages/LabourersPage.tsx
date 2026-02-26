@@ -151,11 +151,12 @@ export const LabourersPage = () => {
         isOpen={isModalOpen}
         isSubmitting={isSubmitting}
         mode={modalMode}
+        type="labourer"
         gardens={gardens}
         labourer={selectedLabourer}
         onClose={() => setIsModalOpen(false)}
-        onCreate={handleCreateLabourer}
-        onUpdate={handleUpdateLabourer}
+        onCreateLabourer={handleCreateLabourer}
+        onUpdateLabourer={handleUpdateLabourer}
       />
     </div>
   );

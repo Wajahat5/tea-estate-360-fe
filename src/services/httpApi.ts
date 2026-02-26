@@ -269,6 +269,21 @@ export const httpApi = {
       })
   },
   employee: {
+    create: (body: CreateEmployeeRequest) =>
+      request<Employee>("/employee/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateEmployeeRequest) =>
+      request<Employee>("/employee/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (employeeid: string) =>
+      request<void>("/employee/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ employeeid })
+      }),
     listByGarden: async (gardenid: string) => {
       const raw = await request<RawEmployee[]>("/employee/fetch", {
         method: "POST",
@@ -288,6 +303,26 @@ export const httpApi = {
     }
   },
   requests: {
+    create: (body: MaintenanceRequest) =>
+      request<MaintenanceRequest>("/requests/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: MaintenanceRequest) =>
+      request<MaintenanceRequest>("/requests/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (requestid: string) =>
+      request<void>("/requests/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ requestid })
+      }),
+    changeStatus: (ids: string[], status: "under_review" | "approved") =>
+      request<void>("/requests/change-status", {
+        method: "PATCH",
+        body: JSON.stringify({ ids, status })
+      }),
     listByFilters: async (
       gardenid: string,
       from: string,
@@ -314,6 +349,26 @@ export const httpApi = {
     }
   },
   expenses: {
+    create: (body: Expense) =>
+      request<Expense>("/expense/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: Expense) =>
+      request<Expense>("/expense/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (expenseid: string) =>
+      request<void>("/expense/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ expenseid })
+      }),
+    changeStatus: (ids: string[], status: "paid" | "unpaid") =>
+      request<void>("/expense/change-status", {
+        method: "PATCH",
+        body: JSON.stringify({ ids, status })
+      }),
     listByFilters: async (
       gardenid: string,
       from: string,
@@ -344,6 +399,21 @@ export const httpApi = {
     }
   },
   tasks: {
+    create: (body: CreateTaskRequest) =>
+      request<Task>("/task/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateTaskRequest) =>
+      request<Task>("/task/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (taskid: string) =>
+      request<void>("/task/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ taskid })
+      }),
     listByFilters: async (gardenid: string, from: string, to: string) => {
       const raw = await request<
         Array<

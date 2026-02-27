@@ -5,7 +5,9 @@ import { apiService } from "../services/apiService";
 import { auth } from "../services/auth";
 import { centralData } from "../services/centralData";
 import { clearAuth } from "../store/authSlice";
+import { clearError } from "../store/errorSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { ErrorBanner } from "../ui/ErrorBanner";
 import { TeaEstateLogo } from "../ui/TeaEstateLogo";
 
 const navItems = [
@@ -21,6 +23,7 @@ const navItems = [
 export const DashboardLayout = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const error = useAppSelector((state) => state.error.message);
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -56,6 +59,9 @@ export const DashboardLayout = () => {
 
   return (
     <div className="dashboard-layout">
+      {error && (
+        <ErrorBanner message={error} onClose={() => dispatch(clearError())} />
+      )}
       <aside className="sidebar">
         <div className="sidebar-header">
           <TeaEstateLogo />

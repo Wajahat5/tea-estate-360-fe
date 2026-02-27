@@ -132,27 +132,45 @@ type RawLabourer = {
   address_details: string;
 };
 
+import { setError } from "../store/errorSlice";
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = store.getState().auth.token || auth.getToken();
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token
-        ? {
-            authorization: `Bearer ${token}`
-          }
-        : {}),
-      ...(options.headers || {})
-    },
-    ...options
-  });
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token
+          ? {
+              authorization: `Bearer ${token}`
+            }
+          : {}),
+        ...(options.headers || {})
+      },
+      ...options
+    });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || response.statusText);
+    if (!response.ok) {
+      const text = await response.text();
+      // Try to parse JSON error message if possible
+      let errorMessage = text || response.statusText;
+      try {
+        const jsonError = JSON.parse(text);
+        if (jsonError.message) {
+          errorMessage = jsonError.message;
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorMessage);
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    const message = (error as Error).message || "An unexpected error occurred";
+    store.dispatch(setError(message));
+    throw error;
   }
-
-  return (await response.json()) as T;
 }
 
 export const httpApi = {
@@ -202,6 +220,32 @@ export const httpApi = {
       })
   },
   company: {
+    create: (body: CreateCompanyRequest) =>
+      request<RawCompanyListItem>("/company/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateCompanyRequest) =>
+      request<void>("/company/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    uploadImage: (companyid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("companyid", companyid);
+      // Let fetch handle Content-Type for FormData
+      return request<void>("/company/upload-image", {
+        method: "POST",
+        body: formData as unknown as BodyInit,
+        headers: {} // Remove Content-Type: application/json
+      });
+    },
+    removeImage: (companyid: string) =>
+      request<void>("/company/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ companyid })
+      }),
     list: async () => {
       const raw = await request<RawCompanyListItem[]>("/company/fetchall", {
         method: "GET"
@@ -233,6 +277,16 @@ export const httpApi = {
     }
   },
   garden: {
+    create: (body: CreateGardenRequest) =>
+      request<Garden>("/garden/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateGardenRequest) =>
+      request<void>("/garden/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
     // Swagger only defines /garden/fetch/{gardenid}; there is no list endpoint.
     // For now, return an empty list to avoid 404s until a real list API is added.
     list: async () => {

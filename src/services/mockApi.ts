@@ -240,6 +240,19 @@ export const mockApi = {
       companies[index] = { ...companies[index], ...payload };
       return companies[index];
     },
+    async uploadImage(companyid: string, _file: File): Promise<void> {
+      await delay(500);
+      const company = companies.find((c) => c.companyid === companyid);
+      if (!company) throw new Error("Company not found");
+      // Mock upload by doing nothing or setting a fake URL if we could edit Company type easily,
+      // but Company interface implies it has image property.
+      // We will assume success.
+    },
+    async removeImage(companyid: string): Promise<void> {
+      await delay(300);
+      const company = companies.find((c) => c.companyid === companyid);
+      if (!company) throw new Error("Company not found");
+    },
     async fetch(companyid: string): Promise<Company | undefined> {
       await delay(200);
       return companies.find((c) => c.companyid === companyid);

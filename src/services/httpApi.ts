@@ -3,7 +3,12 @@ import { auth } from "./auth";
 import { store } from "../store";
 import type {
   CompanyListItem,
+  CreateCompanyRequest,
+  CreateEmployeeRequest,
+  CreateGardenRequest,
   CreateLabourerRequest,
+  CreateTaskRequest,
+  CreateUserRequest,
   DashboardAlertsResponse,
   DashboardGardenBreakdownResponse,
   DashboardOverviewResponse,
@@ -15,12 +20,17 @@ import type {
   Garden,
   Labourer,
   LoginUserRequest,
-  CreateUserRequest,
+  MaintenanceRequest,
   RequestsFetchItem,
   Task,
+  UpdateCompanyRequest,
+  UpdateEmployeeRequest,
+  UpdateGardenRequest,
   UpdateLabourerRequest,
+  UpdateTaskRequest,
   User
 } from "../types/api";
+import { setError } from "../store/errorSlice";
 
 const BASE_URL = config.apiBaseUrl.replace(/\/$/, "");
 
@@ -119,6 +129,7 @@ type RawEmployee = {
   name: string;
   profession: string;
   phone: string;
+  image?: string;
 };
 
 type RawLabourer = {
@@ -130,29 +141,48 @@ type RawLabourer = {
   married_status: boolean | string;
   gender: "male" | "female" | "other";
   address_details: string;
+  image?: string;
 };
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = store.getState().auth.token || auth.getToken();
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token
-        ? {
-            authorization: `Bearer ${token}`
-          }
-        : {}),
-      ...(options.headers || {})
-    },
-    ...options
-  });
+  try {
+    const headers: Record<string, string> = {
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(options.headers as Record<string, string> || {})
+    };
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || response.statusText);
+    // Only set Content-Type to application/json if the body is not FormData
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      // Try to parse JSON error message if possible
+      let errorMessage = text || response.statusText;
+      try {
+        const jsonError = JSON.parse(text);
+        if (jsonError.message) {
+          errorMessage = jsonError.message;
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorMessage);
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    const message = (error as Error).message || "An unexpected error occurred";
+    store.dispatch(setError(message));
+    throw error;
   }
-
-  return (await response.json()) as T;
 }
 
 export const httpApi = {
@@ -196,12 +226,55 @@ export const httpApi = {
         method: "POST",
         body: JSON.stringify(body)
       }),
+    update: (body: UpdateUserRequest) =>
+      request<User>("/user/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    uploadImage: (userid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("userid", userid);
+      return request<void>("/user/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (userid: string) =>
+      request<void>("/user/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ userid })
+      }),
     logout: () =>
       request<void>("/user/logout", {
         method: "POST"
       })
   },
   company: {
+    create: (body: CreateCompanyRequest) =>
+      request<RawCompanyListItem>("/company/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateCompanyRequest) =>
+      request<void>("/company/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    uploadImage: (companyid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("companyid", companyid);
+      return request<void>("/company/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (companyid: string) =>
+      request<void>("/company/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ companyid })
+      }),
     list: async () => {
       const raw = await request<RawCompanyListItem[]>("/company/fetchall", {
         method: "GET"
@@ -233,8 +306,16 @@ export const httpApi = {
     }
   },
   garden: {
-    // Swagger only defines /garden/fetch/{gardenid}; there is no list endpoint.
-    // For now, return an empty list to avoid 404s until a real list API is added.
+    create: (body: CreateGardenRequest) =>
+      request<Garden>("/garden/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateGardenRequest) =>
+      request<void>("/garden/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
     list: async () => {
       return [] as Garden[];
     }
@@ -253,7 +334,8 @@ export const httpApi = {
               ? String(item.married_status)
               : item.married_status,
           gender: item.gender,
-          address_details: item.address_details
+          address_details: item.address_details,
+          image: item.image
         })
       );
     },
@@ -266,9 +348,38 @@ export const httpApi = {
       request<UpdateLabourerResponse>("/labourer/update", {
         method: "PATCH",
         body: JSON.stringify(body)
+      }),
+    uploadImage: (labourerid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("labourerid", labourerid);
+      return request<void>("/labourer/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (labourerid: string) =>
+      request<void>("/labourer/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ labourerid })
       })
   },
   employee: {
+    create: (body: CreateEmployeeRequest) =>
+      request<Employee>("/employee/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateEmployeeRequest) =>
+      request<Employee>("/employee/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (employeeid: string) =>
+      request<void>("/employee/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ employeeid })
+      }),
     listByGarden: async (gardenid: string) => {
       const raw = await request<RawEmployee[]>("/employee/fetch", {
         method: "POST",
@@ -281,13 +392,48 @@ export const httpApi = {
             gardenid: employee.gardenid,
             name: employee.name,
             profession: employee.profession,
-            phone: employee.phone
+            phone: employee.phone,
+            image: employee.image
           })
         )
         .filter((employee) => !employee.gardenid || employee.gardenid === gardenid);
-    }
+    },
+    uploadImage: (employeeid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("employeeid", employeeid);
+      return request<void>("/employee/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (employeeid: string) =>
+      request<void>("/employee/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ employeeid })
+      })
   },
   requests: {
+    create: (body: MaintenanceRequest) =>
+      request<MaintenanceRequest>("/requests/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: MaintenanceRequest) =>
+      request<MaintenanceRequest>("/requests/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (requestid: string) =>
+      request<void>("/requests/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ ids: [requestid] })
+      }),
+    changeStatus: (ids: string[], status: "under_review" | "approved") =>
+      request<void>("/requests/change-status", {
+        method: "PATCH",
+        body: JSON.stringify({ requestids: ids, status })
+      }),
     listByFilters: async (
       gardenid: string,
       from: string,
@@ -311,9 +457,43 @@ export const httpApi = {
           image: item.image
         })
       );
-    }
+    },
+    uploadImage: (requestid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("requestid", requestid);
+      return request<void>("/requests/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (requestid: string) =>
+      request<void>("/requests/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ requestid })
+      })
   },
   expenses: {
+    create: (body: Expense) =>
+      request<Expense>("/expense/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: Expense) =>
+      request<Expense>("/expense/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (expenseid: string) =>
+      request<void>("/expense/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ ids: [expenseid] })
+      }),
+    changeStatus: (ids: string[], status: "paid" | "unpaid") =>
+      request<void>("/expense/change-status", {
+        method: "PATCH",
+        body: JSON.stringify({ expenseids: ids, status })
+      }),
     listByFilters: async (
       gardenid: string,
       from: string,
@@ -324,6 +504,7 @@ export const httpApi = {
         Array<
           Omit<Expense, "expenseid"> & {
             _id: string;
+            image?: string;
           }
         >
       >(
@@ -338,12 +519,42 @@ export const httpApi = {
           title: item.title,
           req_id: item.req_id ?? null,
           points: item.points || [],
-          status: item.status
+          status: item.status,
+          image: item.image
         })
       );
-    }
+    },
+    uploadImages: (expenseid: string, files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => formData.append("files", file));
+      formData.append("expenseid", expenseid);
+      return request<void>("/expense/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (expenseid: string) =>
+      request<void>("/expense/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ expenseid })
+      })
   },
   tasks: {
+    create: (body: CreateTaskRequest) =>
+      request<Task>("/task/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    update: (body: UpdateTaskRequest) =>
+      request<Task>("/task/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    delete: (taskid: string) =>
+      request<void>("/task/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ ids: [taskid] })
+      }),
     listByFilters: async (gardenid: string, from: string, to: string) => {
       const raw = await request<
         Array<

@@ -27,6 +27,7 @@ export const LoginPage = () => {
       if (loginResponse.token) {
         auth.setToken(loginResponse.token);
       }
+      auth.setUser(loginResponse.user);
       dispatch(
         setAuth({
           token: loginResponse.token,
@@ -36,6 +37,7 @@ export const LoginPage = () => {
       dispatch(fetchCompaniesStart());
       try {
         const companies = await apiService.company.list();
+        auth.setCompanies(companies);
         dispatch(fetchCompaniesSuccess(companies));
       } catch (companyError) {
         dispatch(

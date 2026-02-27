@@ -71,6 +71,10 @@ export interface LoginUserRequest {
 export interface UpdateUserRequest {
   userid: string;
   gardenid: string;
+  name?: string;
+  phone?: string;
+  profession?: string;
+  email?: string;
 }
 
 export interface Garden {
@@ -103,6 +107,7 @@ export interface Labourer {
   married_status: string;
   gender: "male" | "female" | "other";
   address_details: string;
+  image?: string;
 }
 
 export interface CreateLabourerRequest
@@ -168,6 +173,7 @@ export interface MaintenanceRequest {
   ids: string[];
   points: string[];
   status: RequestStatus;
+  image?: string;
 }
 
 export interface RequestLabourer {
@@ -209,6 +215,7 @@ export interface Expense {
   req_id: string | null;
   points: string[];
   status: ExpenseStatus;
+  image?: string;
 }
 
 export interface RewardUpdates {
@@ -227,6 +234,7 @@ export interface Employee {
   name: string;
   profession: string;
   phone: string;
+  image?: string;
 }
 
 export interface CreateEmployeeRequest

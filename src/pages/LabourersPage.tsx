@@ -66,11 +66,21 @@ export const LabourersPage = () => {
     }
   };
 
-  const handleUpdateLabourer = async (payload: UpdateLabourerRequest) => {
+  const handleUpdateLabourer = async (
+    payload: UpdateLabourerRequest,
+    file?: File | null,
+    removeImage?: boolean
+  ) => {
     setIsSubmitting(true);
     setError(null);
     try {
       await apiService.labourer.update(payload);
+      if (removeImage) {
+        await apiService.labourer.removeImage(payload.labourerid);
+      }
+      if (file) {
+        await apiService.labourer.uploadImage(payload.labourerid, file);
+      }
       await loadLabourers();
       setIsModalOpen(false);
       setSuccessMessage("Labourer updated successfully");
@@ -110,6 +120,7 @@ export const LabourersPage = () => {
         <table className="table">
           <thead>
             <tr>
+              <th>Image</th>
               <th>Name</th>
               <th>Type</th>
               <th>Gender</th>
@@ -121,6 +132,29 @@ export const LabourersPage = () => {
           <tbody>
             {labourers.map((l) => (
               <tr key={l.labourerid}>
+                <td>
+                  {l.image ? (
+                    <img
+                      src={l.image}
+                      alt={l.name}
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        objectFit: "cover"
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        background: "#e5e7eb"
+                      }}
+                    />
+                  )}
+                </td>
                 <td>{l.name}</td>
                 <td>{l.type}</td>
                 <td>{l.gender}</td>
@@ -151,11 +185,12 @@ export const LabourersPage = () => {
         isOpen={isModalOpen}
         isSubmitting={isSubmitting}
         mode={modalMode}
+        type="labourer"
         gardens={gardens}
         labourer={selectedLabourer}
         onClose={() => setIsModalOpen(false)}
-        onCreate={handleCreateLabourer}
-        onUpdate={handleUpdateLabourer}
+        onCreateLabourer={handleCreateLabourer}
+        onUpdateLabourer={handleUpdateLabourer}
       />
     </div>
   );

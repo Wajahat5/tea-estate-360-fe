@@ -213,7 +213,7 @@ export const DashboardLayout = () => {
                   className="profile-menu-item"
                   onClick={() => setIsUserModalOpen(true)}
                 >
-                  Edit Profile
+                  📝 Edit Profile
                 </button>
                 <button
                   type="button"

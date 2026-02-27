@@ -567,64 +567,194 @@ export const FormModal = ({
 
   const renderLabourerForm = () => (
     <>
-      <label className="field-label">Name<input className="field-input" name="name" value={labourerFormData.name} onChange={handleLabourerChange} /></label>
-      <label className="field-label">Type
-        <select className="field-input" name="type" value={labourerFormData.type} onChange={handleLabourerChange}>
-          <option value="permanent">Permanent</option><option value="casual">Casual</option>
-          {mode === "update" && <option value="temporary">Temporary</option>}
+      <label className="field-label">
+        Name
+        <input className="field-input" name="name" value={labourerFormData.name} onChange={handleLabourerChange} required />
+      </label>
+      <label className="field-label">
+        Type
+        <select className="field-input" name="type" value={labourerFormData.type} onChange={handleLabourerChange} required>
+          <option value="permanent">Permanent</option>
+          <option value="casual">Casual</option>
+          <option value="temporary">Temporary</option>
         </select>
       </label>
       {mode === "create" && (
-        <label className="field-label">Garden
-          <select className="field-input" name="gardenid" value={labourerFormData.gardenid} onChange={handleLabourerChange}>
-            <option value="">Select garden</option>{gardens.map(g => <option key={g.gardenid} value={g.gardenid}>{g.name}</option>)}
+        <label className="field-label">
+          Garden
+          <select className="field-input" name="gardenid" value={labourerFormData.gardenid} onChange={handleLabourerChange} required>
+            <option value="">Select garden</option>
+            {gardens.map((g) => (
+              <option key={g.gardenid} value={g.gardenid}>
+                {g.name}
+              </option>
+            ))}
           </select>
         </label>
       )}
-      <label className="field-label">Status<select className="field-input" name="married_status" value={labourerFormData.married_status} onChange={handleLabourerChange}><option value="true">Married</option><option value="false">Unmarried</option></select></label>
-      <label className="field-label">Gender<select className="field-input" name="gender" value={labourerFormData.gender} onChange={handleLabourerChange}><option value="male">Male</option><option value="female">Female</option></select></label>
-      <label className="field-label">Address<textarea className="field-input" name="address_details" value={labourerFormData.address_details} onChange={handleLabourerChange} /></label>
+      <label className="field-label">
+        Status
+        <select className="field-input" name="married_status" value={labourerFormData.married_status} onChange={handleLabourerChange} required>
+          <option value="true">Married</option>
+          <option value="false">Unmarried</option>
+        </select>
+      </label>
+      <label className="field-label">
+        Gender
+        <select className="field-input" name="gender" value={labourerFormData.gender} onChange={handleLabourerChange} required>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </label>
+      <label className="field-label">
+        Address
+        <textarea className="field-input" name="address_details" value={labourerFormData.address_details} onChange={handleLabourerChange} required />
+      </label>
     </>
   );
 
   const renderEmployeeForm = () => (
     <>
-      <label className="field-label">Name<input className="field-input" name="name" value={employeeFormData.name} onChange={handleEmployeeChange} /></label>
-      <label className="field-label">Profession<input className="field-input" name="profession" value={employeeFormData.profession} onChange={handleEmployeeChange} /></label>
-      <label className="field-label">Phone<input className="field-input" name="phone" value={employeeFormData.phone} onChange={handleEmployeeChange} /></label>
-      {mode === "create" && <label className="field-label">Garden<select className="field-input" name="gardenid" value={employeeFormData.gardenid} onChange={handleEmployeeChange}><option value="">Select garden</option>{gardens.map(g => <option key={g.gardenid} value={g.gardenid}>{g.name}</option>)}</select></label>}
+      <label className="field-label">
+        Name
+        <input className="field-input" name="name" value={employeeFormData.name} onChange={handleEmployeeChange} required />
+      </label>
+      <label className="field-label">
+        Profession
+        <input className="field-input" name="profession" value={employeeFormData.profession} onChange={handleEmployeeChange} required />
+      </label>
+      <label className="field-label">
+        Phone
+        <input className="field-input" name="phone" value={employeeFormData.phone} onChange={handleEmployeeChange} required />
+      </label>
+      {mode === "create" && (
+        <label className="field-label">
+          Garden
+          <select className="field-input" name="gardenid" value={employeeFormData.gardenid} onChange={handleEmployeeChange} required>
+            <option value="">Select garden</option>
+            {gardens.map((g) => (
+              <option key={g.gardenid} value={g.gardenid}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
     </>
   );
 
-  // Simplified Request/Expense/Task renders
   const renderRequestForm = () => (
     <>
-      <label className="field-label">Title<input className="field-input" name="title" value={requestFormData.title} onChange={handleRequestChange} /></label>
-      <label className="field-label">Date<input className="field-input" type="date" name="date" value={requestFormData.date} onChange={handleRequestChange} /></label>
-      {mode === "create" && <label className="field-label">Garden<select className="field-input" name="gardenid" value={requestFormData.gardenid} onChange={handleRequestChange}><option value="">Select garden</option>{gardens.map(g => <option key={g.gardenid} value={g.gardenid}>{g.name}</option>)}</select></label>}
-      <label className="field-label">Model<select className="field-input" name="model_name" value={requestFormData.model_name} onChange={handleRequestChange}><option value="labourer">Labourer</option><option value="garden">Garden</option></select></label>
-      <label className="field-label">IDs<input className="field-input" name="ids" value={requestFormData.ids} onChange={handleRequestChange} /></label>
-      <label className="field-label">Points<textarea className="field-input" name="points" value={requestFormData.points} onChange={handleRequestChange} /></label>
+      <label className="field-label">
+        Title
+        <input className="field-input" name="title" value={requestFormData.title} onChange={handleRequestChange} required />
+      </label>
+      <label className="field-label">
+        Date
+        <input className="field-input" type="date" name="date" value={requestFormData.date} onChange={handleRequestChange} required />
+      </label>
+      {mode === "create" && (
+        <label className="field-label">
+          Garden
+          <select className="field-input" name="gardenid" value={requestFormData.gardenid} onChange={handleRequestChange} required>
+            <option value="">Select garden</option>
+            {gardens.map((g) => (
+              <option key={g.gardenid} value={g.gardenid}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <label className="field-label">
+        Model
+        <select className="field-input" name="model_name" value={requestFormData.model_name} onChange={handleRequestChange} required>
+          <option value="labourer">Labourer</option>
+          <option value="garden">Garden</option>
+        </select>
+      </label>
+      <label className="field-label">
+        IDs
+        <input className="field-input" name="ids" value={requestFormData.ids} onChange={handleRequestChange} />
+      </label>
+      <label className="field-label">
+        Points
+        <textarea className="field-input" name="points" value={requestFormData.points} onChange={handleRequestChange} required />
+      </label>
     </>
   );
 
   const renderExpenseForm = () => (
     <>
-      <label className="field-label">Title<input className="field-input" name="title" value={expenseFormData.title} onChange={handleExpenseChange} /></label>
-      <label className="field-label">Date<input className="field-input" type="date" name="date" value={expenseFormData.date} onChange={handleExpenseChange} /></label>
-      {mode === "create" && <label className="field-label">Garden<select className="field-input" name="gardenid" value={expenseFormData.gardenid} onChange={handleExpenseChange}><option value="">Select garden</option>{gardens.map(g => <option key={g.gardenid} value={g.gardenid}>{g.name}</option>)}</select></label>}
-      <label className="field-label">Req ID<input className="field-input" name="req_id" value={expenseFormData.req_id} onChange={handleExpenseChange} /></label>
-      <label className="field-label">Points<textarea className="field-input" name="points" value={expenseFormData.points} onChange={handleExpenseChange} /></label>
+      <label className="field-label">
+        Title
+        <input className="field-input" name="title" value={expenseFormData.title} onChange={handleExpenseChange} required />
+      </label>
+      <label className="field-label">
+        Date
+        <input className="field-input" type="date" name="date" value={expenseFormData.date} onChange={handleExpenseChange} required />
+      </label>
+      {mode === "create" && (
+        <label className="field-label">
+          Garden
+          <select className="field-input" name="gardenid" value={expenseFormData.gardenid} onChange={handleExpenseChange} required>
+            <option value="">Select garden</option>
+            {gardens.map((g) => (
+              <option key={g.gardenid} value={g.gardenid}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <label className="field-label">
+        Req ID
+        <input className="field-input" name="req_id" value={expenseFormData.req_id} onChange={handleExpenseChange} />
+      </label>
+      <label className="field-label">
+        Points
+        <textarea className="field-input" name="points" value={expenseFormData.points} onChange={handleExpenseChange} required />
+      </label>
     </>
   );
 
   const renderTaskForm = () => (
     <>
-      <label className="field-label">Title<input className="field-input" name="title" value={taskFormData.title} onChange={handleTaskChange} /></label>
-      <label className="field-label">Date<input className="field-input" type="date" name="date" value={taskFormData.date} onChange={handleTaskChange} /></label>
-      {mode === "create" && <label className="field-label">Garden<select className="field-input" name="gardenid" value={taskFormData.gardenid} onChange={handleTaskChange}><option value="">Select garden</option>{gardens.map(g => <option key={g.gardenid} value={g.gardenid}>{g.name}</option>)}</select></label>}
-      {mode === "update" && <label className="field-label">Status<select className="field-input" name="status" value={taskFormData.status} onChange={handleTaskChange}><option value="not_started">Not Started</option><option value="under_progress">In Progress</option><option value="completed">Completed</option></select></label>}
-      <label className="field-label">Points<textarea className="field-input" name="points" value={taskFormData.points} onChange={handleTaskChange} /></label>
+      <label className="field-label">
+        Title
+        <input className="field-input" name="title" value={taskFormData.title} onChange={handleTaskChange} required />
+      </label>
+      <label className="field-label">
+        Date
+        <input className="field-input" type="date" name="date" value={taskFormData.date} onChange={handleTaskChange} required />
+      </label>
+      {mode === "create" && (
+        <label className="field-label">
+          Garden
+          <select className="field-input" name="gardenid" value={taskFormData.gardenid} onChange={handleTaskChange} required>
+            <option value="">Select garden</option>
+            {gardens.map((g) => (
+              <option key={g.gardenid} value={g.gardenid}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {mode === "update" && (
+        <label className="field-label">
+          Status
+          <select className="field-input" name="status" value={taskFormData.status} onChange={handleTaskChange} required>
+            <option value="not_started">Not Started</option>
+            <option value="under_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+      )}
+      <label className="field-label">
+        Points
+        <textarea className="field-input" name="points" value={taskFormData.points} onChange={handleTaskChange} required />
+      </label>
     </>
   );
 

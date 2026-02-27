@@ -118,12 +118,7 @@ export const ExpensesPage = () => {
     if (!expenseToDelete) return;
     setError(null);
     try {
-      if ('delete' in apiService.expenses) {
-         // @ts-expect-error delete is dynamically added
-         await apiService.expenses.delete(expenseToDelete.expenseid);
-      } else {
-         throw new Error("Delete operation not supported");
-      }
+      await apiService.expenses.delete(expenseToDelete.expenseid);
 
       if (gardenid && from && to) {
         await loadExpenses(gardenid, from, to, status);
@@ -140,16 +135,11 @@ export const ExpensesPage = () => {
     setError(null);
     const newStatus = expense.status === "paid" ? "unpaid" : "paid";
     try {
-      if ('changeStatus' in apiService.expenses) {
-        // @ts-expect-error changeStatus is dynamically added
-        await apiService.expenses.changeStatus([expense.expenseid], newStatus);
-        if (gardenid && from && to) {
-          await loadExpenses(gardenid, from, to, status);
-        }
-        setSuccessMessage(`Expense marked as ${newStatus}`);
-      } else {
-        throw new Error("Change status operation not supported");
+      await apiService.expenses.changeStatus([expense.expenseid], newStatus);
+      if (gardenid && from && to) {
+        await loadExpenses(gardenid, from, to, status);
       }
+      setSuccessMessage(`Expense marked as ${newStatus}`);
     } catch (toggleError) {
       setError((toggleError as Error).message || "Failed to update expense status");
     }

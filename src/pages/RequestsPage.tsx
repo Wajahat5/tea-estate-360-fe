@@ -120,12 +120,7 @@ export const RequestsPage = () => {
     if (!requestToDelete) return;
     setError(null);
     try {
-      if ('delete' in apiService.requests) {
-         // @ts-expect-error delete is dynamically added
-         await apiService.requests.delete(requestToDelete._id);
-      } else {
-         throw new Error("Delete operation not supported");
-      }
+      await apiService.requests.delete(requestToDelete._id);
 
       if (gardenid && from && to) {
         await loadRequests(gardenid, from, to, status);
@@ -142,16 +137,11 @@ export const RequestsPage = () => {
     setError(null);
     const newStatus = request.status === "under_review" ? "approved" : "under_review";
     try {
-      if ('changeStatus' in apiService.requests) {
-        // @ts-expect-error changeStatus is dynamically added
-        await apiService.requests.changeStatus([request._id], newStatus);
-        if (gardenid && from && to) {
-          await loadRequests(gardenid, from, to, status);
-        }
-        setSuccessMessage(`Request status updated to ${newStatus}`);
-      } else {
-        throw new Error("Change status operation not supported");
+      await apiService.requests.changeStatus([request._id], newStatus);
+      if (gardenid && from && to) {
+        await loadRequests(gardenid, from, to, status);
       }
+      setSuccessMessage(`Request status updated to ${newStatus}`);
     } catch (toggleError) {
       setError((toggleError as Error).message || "Failed to update request status");
     }

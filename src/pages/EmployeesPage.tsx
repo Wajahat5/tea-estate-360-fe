@@ -112,14 +112,7 @@ export const EmployeesPage = () => {
     if (!employeeToDelete) return;
     setError(null);
     try {
-      if ('delete' in apiService.employee) {
-         // @ts-expect-error delete is dynamically added or typed
-         await apiService.employee.delete(employeeToDelete.employeeid);
-      } else {
-         // Fallback if type definition is not updated yet in some contexts, but we updated it
-         // This branch shouldn't be hit if types are correct
-         throw new Error("Delete operation not supported");
-      }
+      await apiService.employee.delete(employeeToDelete.employeeid);
 
       if (gardenid) {
         await loadEmployees(gardenid);

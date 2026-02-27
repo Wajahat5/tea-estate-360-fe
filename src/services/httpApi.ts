@@ -137,17 +137,19 @@ import { setError } from "../store/errorSlice";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = store.getState().auth.token || auth.getToken();
   try {
+    const headers: Record<string, string> = {
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(options.headers as Record<string, string> || {})
+    };
+
+    // Only set Content-Type to application/json if the body is not FormData
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+
     const response = await fetch(`${BASE_URL}${path}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token
-          ? {
-              authorization: `Bearer ${token}`
-            }
-          : {}),
-        ...(options.headers || {})
-      },
-      ...options
+      ...options,
+      headers
     });
 
     if (!response.ok) {
@@ -234,11 +236,9 @@ export const httpApi = {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("companyid", companyid);
-      // Let fetch handle Content-Type for FormData
       return request<void>("/company/upload-image", {
         method: "POST",
-        body: formData as unknown as BodyInit,
-        headers: {} // Remove Content-Type: application/json
+        body: formData
       });
     },
     removeImage: (companyid: string) =>
@@ -320,7 +320,16 @@ export const httpApi = {
       request<UpdateLabourerResponse>("/labourer/update", {
         method: "PATCH",
         body: JSON.stringify(body)
-      })
+      }),
+    uploadImage: (labourerid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("labourerid", labourerid);
+      return request<void>("/labourer/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    }
   },
   employee: {
     create: (body: CreateEmployeeRequest) =>
@@ -354,6 +363,15 @@ export const httpApi = {
           })
         )
         .filter((employee) => !employee.gardenid || employee.gardenid === gardenid);
+    },
+    uploadImage: (employeeid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("employeeid", employeeid);
+      return request<void>("/employee/upload-image", {
+        method: "POST",
+        body: formData
+      });
     }
   },
   requests: {
@@ -400,6 +418,15 @@ export const httpApi = {
           image: item.image
         })
       );
+    },
+    uploadImage: (requestid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("requestid", requestid);
+      return request<void>("/requests/upload-image", {
+        method: "POST",
+        body: formData
+      });
     }
   },
   expenses: {
@@ -450,6 +477,15 @@ export const httpApi = {
           status: item.status
         })
       );
+    },
+    uploadImages: (expenseid: string, files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => formData.append("files", file));
+      formData.append("expenseid", expenseid);
+      return request<void>("/expense/upload-image", {
+        method: "POST",
+        body: formData
+      });
     }
   },
   tasks: {

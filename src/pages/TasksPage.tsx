@@ -106,12 +106,7 @@ export const TasksPage = () => {
     if (!taskToDelete) return;
     setError(null);
     try {
-      if ('delete' in apiService.tasks) {
-         // @ts-expect-error delete is dynamically added
-         await apiService.tasks.delete(taskToDelete.taskid);
-      } else {
-         throw new Error("Delete operation not supported");
-      }
+      await apiService.tasks.delete(taskToDelete.taskid);
 
       if (gardenid && from && to) {
         await loadTasks(gardenid, from, to);

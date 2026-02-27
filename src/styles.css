@@ -221,6 +221,7 @@ button {
 
 .topbar-user-wrapper {
   position: relative;
+  margin-left: auto;
 }
 
 .topbar-user {

@@ -316,12 +316,12 @@ export const httpApi = {
     delete: (requestid: string) =>
       request<void>("/requests/delete", {
         method: "DELETE",
-        body: JSON.stringify({ requestid })
+        body: JSON.stringify({ ids: [requestid] })
       }),
     changeStatus: (ids: string[], status: "under_review" | "approved") =>
       request<void>("/requests/change-status", {
         method: "PATCH",
-        body: JSON.stringify({ ids, status })
+        body: JSON.stringify({ requestids: ids, status })
       }),
     listByFilters: async (
       gardenid: string,
@@ -362,12 +362,12 @@ export const httpApi = {
     delete: (expenseid: string) =>
       request<void>("/expense/delete", {
         method: "DELETE",
-        body: JSON.stringify({ expenseid })
+        body: JSON.stringify({ ids: [expenseid] })
       }),
     changeStatus: (ids: string[], status: "paid" | "unpaid") =>
       request<void>("/expense/change-status", {
         method: "PATCH",
-        body: JSON.stringify({ ids, status })
+        body: JSON.stringify({ expenseids: ids, status })
       }),
     listByFilters: async (
       gardenid: string,
@@ -412,7 +412,7 @@ export const httpApi = {
     delete: (taskid: string) =>
       request<void>("/task/delete", {
         method: "DELETE",
-        body: JSON.stringify({ taskid })
+        body: JSON.stringify({ ids: [taskid] })
       }),
     listByFilters: async (gardenid: string, from: string, to: string) => {
       const raw = await request<

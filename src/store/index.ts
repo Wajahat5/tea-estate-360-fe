@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { companiesReducer } from "./companiesSlice";
 import { authReducer } from "./authSlice";
+import { errorReducer } from "./errorSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    companies: companiesReducer
+    companies: companiesReducer,
+    error: errorReducer
   }
 });
 

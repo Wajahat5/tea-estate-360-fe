@@ -210,8 +210,30 @@ export const mockApi = {
       if (index === -1) {
         throw new Error("User not found");
       }
-      users[index] = { ...users[index], gardenid: payload.gardenid };
+      users[index] = {
+        ...users[index],
+        gardenid: payload.gardenid,
+        ...(payload.name ? { name: payload.name } : {}),
+        ...(payload.phone ? { phone: payload.phone } : {}),
+        ...(payload.profession ? { profession: payload.profession } : {}),
+        ...(payload.email ? { email: payload.email } : {})
+      };
       return { ...users[index], password: undefined } as unknown as User;
+    },
+
+    async uploadImage(userid: string, _file: File): Promise<void> {
+      await delay(500);
+      const user = users.find((u) => u.userid === userid);
+      if (!user) throw new Error("User not found");
+      // In a real app we'd save the file and update the URL.
+      // Here we just acknowledge.
+    },
+
+    async removeImage(userid: string): Promise<void> {
+      await delay(300);
+      const user = users.find((u) => u.userid === userid);
+      if (!user) throw new Error("User not found");
+      // In a real app we'd remove the file reference.
     },
 
     async logout(): Promise<void> {
@@ -239,6 +261,16 @@ export const mockApi = {
       }
       companies[index] = { ...companies[index], ...payload };
       return companies[index];
+    },
+    async uploadImage(companyid: string, _file: File): Promise<void> {
+      await delay(500);
+      const company = companies.find((c) => c.companyid === companyid);
+      if (!company) throw new Error("Company not found");
+    },
+    async removeImage(companyid: string): Promise<void> {
+      await delay(300);
+      const company = companies.find((c) => c.companyid === companyid);
+      if (!company) throw new Error("Company not found");
     },
     async fetch(companyid: string): Promise<Company | undefined> {
       await delay(200);
@@ -321,6 +353,16 @@ export const mockApi = {
       };
       return labourers[index];
     },
+    async uploadImage(labourerid: string, _file: File): Promise<void> {
+      await delay(300);
+      const labourer = labourers.find((l) => l.labourerid === labourerid);
+      if (!labourer) throw new Error("Labourer not found");
+    },
+    async removeImage(labourerid: string): Promise<void> {
+      await delay(300);
+      const labourer = labourers.find((l) => l.labourerid === labourerid);
+      if (!labourer) throw new Error("Labourer not found");
+    },
     async list(): Promise<Labourer[]> {
       await delay(250);
       return [...labourers];
@@ -360,8 +402,22 @@ export const mockApi = {
       if (index === -1) {
         throw new Error("Employee not found");
       }
-      employees[index] = { ...payload };
+      employees[index] = { ...employees[index], ...payload };
       return employees[index];
+    },
+    async delete(employeeid: string): Promise<void> {
+      await delay(200);
+      employees = employees.filter((e) => e.employeeid !== employeeid);
+    },
+    async uploadImage(employeeid: string, _file: File): Promise<void> {
+      await delay(300);
+      const employee = employees.find((e) => e.employeeid === employeeid);
+      if (!employee) throw new Error("Employee not found");
+    },
+    async removeImage(employeeid: string): Promise<void> {
+      await delay(300);
+      const employee = employees.find((e) => e.employeeid === employeeid);
+      if (!employee) throw new Error("Employee not found");
     },
     async listByGarden(gardenid: string): Promise<Employee[]> {
       await delay(200);
@@ -383,6 +439,21 @@ export const mockApi = {
       };
       requests.push(newRequest);
       return newRequest;
+    },
+    async update(payload: MaintenanceRequest): Promise<MaintenanceRequest> {
+      await delay(300);
+      const index = requests.findIndex(
+        (r) => r.requestid === payload.requestid
+      );
+      if (index === -1) {
+        throw new Error("Request not found");
+      }
+      requests[index] = { ...requests[index], ...payload };
+      return requests[index];
+    },
+    async delete(requestid: string): Promise<void> {
+      await delay(200);
+      requests = requests.filter((r) => r.requestid !== requestid);
     },
     async listByFilters(
       gardenid: string,
@@ -420,7 +491,8 @@ export const mockApi = {
               gender: labourer.gender,
               address_details: labourer.address_details,
               image: ""
-            }))
+            })),
+          image: request.image
         }));
     },
     async changeStatus(
@@ -431,6 +503,16 @@ export const mockApi = {
       requests = requests.map((r) =>
         ids.includes(r.requestid) ? { ...r, status } : r
       );
+    },
+    async uploadImage(requestid: string, _file: File): Promise<void> {
+      await delay(300);
+      const request = requests.find((r) => r.requestid === requestid);
+      if (!request) throw new Error("Request not found");
+    },
+    async removeImage(requestid: string): Promise<void> {
+      await delay(300);
+      const request = requests.find((r) => r.requestid === requestid);
+      if (!request) throw new Error("Request not found");
     }
   },
 
@@ -446,6 +528,21 @@ export const mockApi = {
       };
       expenses.push(newExpense);
       return newExpense;
+    },
+    async update(payload: Expense): Promise<Expense> {
+      await delay(300);
+      const index = expenses.findIndex(
+        (e) => e.expenseid === payload.expenseid
+      );
+      if (index === -1) {
+        throw new Error("Expense not found");
+      }
+      expenses[index] = { ...expenses[index], ...payload };
+      return expenses[index];
+    },
+    async delete(expenseid: string): Promise<void> {
+      await delay(200);
+      expenses = expenses.filter((e) => e.expenseid !== expenseid);
     },
     async listByFilters(
       gardenid: string,
@@ -474,6 +571,16 @@ export const mockApi = {
       expenses = expenses.map((e) =>
         ids.includes(e.expenseid) ? { ...e, status } : e
       );
+    },
+    async uploadImages(expenseid: string, _files: File[]): Promise<void> {
+      await delay(300);
+      const expense = expenses.find((e) => e.expenseid === expenseid);
+      if (!expense) throw new Error("Expense not found");
+    },
+    async removeImage(expenseid: string): Promise<void> {
+      await delay(300);
+      const expense = expenses.find((e) => e.expenseid === expenseid);
+      if (!expense) throw new Error("Expense not found");
     }
   },
 
@@ -486,6 +593,19 @@ export const mockApi = {
       };
       tasks.push(task);
       return task;
+    },
+    async update(payload: UpdateTaskRequest): Promise<Task> {
+      await delay(300);
+      const index = tasks.findIndex((t) => t.taskid === payload.taskid);
+      if (index === -1) {
+        throw new Error("Task not found");
+      }
+      tasks[index] = { ...payload };
+      return tasks[index];
+    },
+    async delete(taskid: string): Promise<void> {
+      await delay(200);
+      tasks = tasks.filter((t) => t.taskid !== taskid);
     },
     async listByFilters(
       gardenid: string,
@@ -503,15 +623,6 @@ export const mockApi = {
           taskDate <= toDate
         );
       });
-    },
-    async update(payload: UpdateTaskRequest): Promise<Task> {
-      await delay(300);
-      const index = tasks.findIndex((t) => t.taskid === payload.taskid);
-      if (index === -1) {
-        throw new Error("Task not found");
-      }
-      tasks[index] = { ...payload };
-      return tasks[index];
     }
   },
 

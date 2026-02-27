@@ -132,8 +132,6 @@ export const CompaniesPage = () => {
 
       <h1 className="page-title">Companies</h1>
 
-      {/* We removed inline error display since DashboardLayout handles global errors now */}
-
       <div className="panel">
         <div className="panel-header">
           <h2 className="panel-title">All companies</h2>
@@ -154,7 +152,7 @@ export const CompaniesPage = () => {
         {companies.length === 0 ? (
           <p>No companies found.</p>
         ) : (
-          <div className="grid-cards" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+          <div className="companies-grid">
             {companies.map((company) => (
               <CompanyCard
                 key={company.companyid}
@@ -173,38 +171,12 @@ export const CompaniesPage = () => {
                   setIsModalOpen(true);
                 }}
                 onEditGarden={(gid) => {
-                  // We need to find the garden object. Since we only have ID, we search in companies.
-                  // Or we could pass the full object up. But for now lets find it.
                   const garden = company.gardens.find((g) => g.gardenid === gid);
-                  // We also need the companyid for the form context if needed, though update payload usually just needs gardenid.
-                  // But our FormModal might rely on it.
                   if (garden) {
                     setModalMode("update");
                     setModalType("garden");
                     setSelectedGardenId(gid);
-                    // We can pass the garden object to modal via props if we extend FormModal to accept it,
-                    // or just let FormModal look it up if we passed companies list?
-                    // Better: Pass the garden object directly to modal.
-                    // But FormModal expects `garden` object for update?
-                    // Let's check FormModal props. It takes `garden` prop which is `GardenOption[]`...
-                    // Wait, `gardens` prop is `GardenOption[]`.
-                    // For `update` mode of `garden`, we need to pass the garden details.
-                    // I need to update FormModal to accept `gardenData` or similar.
-                    // Actually I should just update FormModal to accept `selectedGarden` object.
-                    // Let's do a quick fix: pass it via a new prop `gardenData`.
-                    // Oh wait, I updated FormModal in previous step. Let's see.
-                    // I added `company` and `gardenData` props?
-                    // Checking previous step output...
-                    // I added `company` prop.
-                    // I added `gardenData` prop? NO. I see `gardens` prop which is `GardenOption[]`.
-                    // I missed adding a prop to pass the *selected garden* for editing!
-                    // I added `company` prop for editing company.
-                    // I need to add `gardenData` prop to FormModal.
-
-                    // Let's pass it via `gardenData` (I will update FormModal in next sub-step or now).
-                    // Actually I can just update the `FormModal` call here and fixing `FormModal` code is handled in previous step (or I can overwrite it).
-                    // I will assume I fix FormModal to accept `gardenData`.
-                    setSelectedCompanyIdForGarden(company.companyid); // context
+                    setSelectedCompanyIdForGarden(company.companyid);
                     setIsModalOpen(true);
                   }
                 }}
@@ -218,14 +190,8 @@ export const CompaniesPage = () => {
         isOpen={isModalOpen}
         isSubmitting={isSubmitting}
         mode={modalMode}
-        type={modalType as any} // Cast to any to avoid strict union mismatch if types aren't perfectly aligned yet
-        // But wait, type can be "company" | "garden". FormModal should support it.
-        // I need to ensure FormModal supports "company" and "garden".
-
+        type={modalType as any}
         company={selectedCompany}
-
-        // For garden edit, we need to pass the specific garden object.
-        // Let's find it.
         gardenData={
           modalType === "garden" && modalMode === "update" && selectedGardenId
             ? companies
@@ -233,10 +199,7 @@ export const CompaniesPage = () => {
                 .find((g) => g.gardenid === selectedGardenId)
             : undefined
         }
-
-        // Context for creating garden
         companyIdForGarden={selectedCompanyIdForGarden}
-
         onClose={() => setIsModalOpen(false)}
         onCreateCompany={handleCreateCompany}
         onUpdateCompany={handleUpdateCompany}

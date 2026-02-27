@@ -44,81 +44,77 @@ export const CompanyCard = ({
         </button>
       </div>
 
-      <div className="company-details">
+      <div className="company-content">
         <h3 className="company-name">{company.name}</h3>
-        <div className="company-info-row">
-          <span className="info-label">Location:</span>
-          <span className="info-value">
-            {company.district}, {company.state}
-          </span>
-        </div>
-        <div className="company-info-row">
-          <span className="info-label">Pincode:</span>
-          <span className="info-value">{company.pincode}</span>
-        </div>
-        <div className="company-info-row">
-          <span className="info-label">Daily Wage:</span>
-          <span className="info-value">Rs {company.labourer_daily_wage}</span>
-        </div>
-        <div className="company-info-row">
-          <span className="info-label">Wage / kg:</span>
-          <span className="info-value">
-            Rs {company.labourer_extrawage_per_kg}
-          </span>
-        </div>
-        <div className="company-info-row">
-          <span className="info-label">Wage / hr:</span>
-          <span className="info-value">
-            Rs {company.labourer_extrawage_per_hr}
-          </span>
-        </div>
-      </div>
+        <p className="company-location">
+          {company.district}, {company.state} - {company.pincode}
+        </p>
 
-      <div className="company-gardens-section">
-        <button
-          className="expand-gardens-button"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? "Hide Gardens" : `Show Gardens (${company.gardens.length})`}
-          <span className={`arrow ${isExpanded ? "up" : "down"}`}>▼</span>
-        </button>
-
-        {isExpanded && (
-          <div className="gardens-list">
-            <div className="gardens-header">
-              <h4>Gardens</h4>
-              <button
-                className="secondary-button sm-button"
-                onClick={() => onCreateGarden(company.companyid)}
-              >
-                + Add Garden
-              </button>
-            </div>
-            {company.gardens.length === 0 ? (
-              <p className="no-gardens-text">No gardens found.</p>
-            ) : (
-              <div className="gardens-grid">
-                {company.gardens.map((garden) => (
-                  <div key={garden.gardenid} className="garden-item">
-                    <div className="garden-info">
-                      <span className="garden-name">{garden.name}</span>
-                      <span className="garden-location">
-                        {garden.district}, {garden.state} - {garden.pincode}
-                      </span>
-                    </div>
-                    <button
-                      className="icon-action-button sm-icon"
-                      onClick={() => onEditGarden(garden.gardenid)}
-                      title="Edit Garden"
-                    >
-                      📝
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+        <div className="company-stats-grid">
+          <div className="stat-item">
+            <span className="stat-label">Daily Wage</span>
+            <span className="stat-value">₹{company.labourer_daily_wage}</span>
           </div>
-        )}
+          <div className="stat-item">
+            <span className="stat-label">Wage / kg</span>
+            <span className="stat-value">₹{company.labourer_extrawage_per_kg}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Wage / hr</span>
+            <span className="stat-value">₹{company.labourer_extrawage_per_hr}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Gardens</span>
+            <span className="stat-value">{company.gardens.length}</span>
+          </div>
+        </div>
+
+        <div className="accordion-section">
+          <button
+            className={`accordion-toggle ${isExpanded ? "active" : ""}`}
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <span>Gardens ({company.gardens.length})</span>
+            <span className="accordion-icon">{isExpanded ? "▲" : "▼"}</span>
+          </button>
+
+          {isExpanded && (
+            <div className="accordion-content">
+              <div className="gardens-actions">
+                <button
+                  className="secondary-button sm-button full-width"
+                  onClick={() => onCreateGarden(company.companyid)}
+                >
+                  + Add New Garden
+                </button>
+              </div>
+
+              {company.gardens.length === 0 ? (
+                <p className="no-gardens-text">No gardens added yet.</p>
+              ) : (
+                <ul className="gardens-list">
+                  {company.gardens.map((garden) => (
+                    <li key={garden.gardenid} className="garden-list-item">
+                      <div className="garden-info">
+                        <span className="garden-name">{garden.name}</span>
+                        <span className="garden-subtext">
+                          {garden.district}
+                        </span>
+                      </div>
+                      <button
+                        className="icon-action-button sm-icon"
+                        onClick={() => onEditGarden(garden.gardenid)}
+                        title="Edit Garden"
+                      >
+                        📝
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -353,6 +353,12 @@ button {
   margin-bottom: 24px;
 }
 
+.companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
 .stat-card {
   background-color: #ffffff;
   border-radius: 18px;
@@ -538,6 +544,240 @@ button {
 .icon-action-button:hover {
   border-color: #94a3b8;
   background: #f8fafc;
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.sm-button {
+  padding: 4px 12px;
+  font-size: 12px;
+  height: 28px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.sm-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+/* Company Card Styles */
+.company-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.company-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.company-card-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+  margin-bottom: 12px;
+}
+
+.company-image-container {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.company-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.company-initials {
+  width: 100%;
+  height: 100%;
+  background: #15803d;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.company-edit-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.company-content {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.company-name {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 4px;
+  color: #111827;
+}
+
+.company-location {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+.company-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.accordion-section {
+  border-top: 1px solid #e5e7eb;
+  margin-top: auto;
+}
+
+.accordion-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 0;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.accordion-toggle:hover {
+  color: #15803d;
+}
+
+.accordion-toggle.active {
+  color: #15803d;
+  margin-bottom: 12px;
+}
+
+.accordion-icon {
+  font-size: 10px;
+}
+
+.accordion-content {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gardens-actions {
+  margin-bottom: 12px;
+}
+
+.gardens-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.garden-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+}
+
+.garden-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.garden-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.garden-subtext {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.no-gardens-text {
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+  margin: 8px 0;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

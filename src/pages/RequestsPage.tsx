@@ -99,11 +99,21 @@ export const RequestsPage = () => {
     }
   };
 
-  const handleUpdateRequest = async (payload: MaintenanceRequest) => {
+  const handleUpdateRequest = async (
+    payload: MaintenanceRequest,
+    file?: File | null,
+    removeImage?: boolean
+  ) => {
     setIsSubmitting(true);
     setError(null);
     try {
       await apiService.requests.update(payload);
+      if (removeImage) {
+        await apiService.requests.removeImage(payload.requestid);
+      }
+      if (file) {
+        await apiService.requests.uploadImage(payload.requestid, file);
+      }
       if (gardenid && from && to) {
         await loadRequests(gardenid, from, to, status);
       }
@@ -244,6 +254,7 @@ export const RequestsPage = () => {
           <table className="table">
             <thead>
               <tr>
+                <th>Image</th>
                 <th>Title</th>
                 <th>Date</th>
                 <th>Status</th>
@@ -256,6 +267,29 @@ export const RequestsPage = () => {
             <tbody>
               {requests.map((request) => (
                 <tr key={request._id}>
+                  <td>
+                    {request.image ? (
+                      <img
+                        src={request.image}
+                        alt={request.title}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          objectFit: "cover"
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          background: "#e5e7eb"
+                        }}
+                      />
+                    )}
+                  </td>
                   <td>{request.title}</td>
                   <td>{request.date}</td>
                   <td>
@@ -305,7 +339,8 @@ export const RequestsPage = () => {
                             ...(request.employees || []).map((e) => e._id)
                           ],
                           points: request.points,
-                          status: request.status
+                          status: request.status,
+                          image: request.image
                         };
                         setSelectedRequest(reconstructedRequest);
                         setIsModalOpen(true);

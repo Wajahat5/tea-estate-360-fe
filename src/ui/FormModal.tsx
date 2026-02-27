@@ -29,26 +29,26 @@ type FormModalProps = {
   isSubmitting: boolean;
   mode: "create" | "update";
   type: "labourer" | "employee" | "request" | "expense" | "task" | "company" | "garden";
-  gardens?: GardenOption[]; // Optional because company/garden forms might not need list of gardens
+  gardens?: GardenOption[];
   labourer?: Labourer;
   employee?: Employee;
   request?: MaintenanceRequest;
   expense?: Expense;
   task?: Task;
   company?: CompanyListItem;
-  gardenData?: Garden; // Specific garden object for editing
-  companyIdForGarden?: string; // Context for creating a garden
+  gardenData?: Garden;
+  companyIdForGarden?: string;
 
   onClose: () => void;
 
   onCreateLabourer?: (payload: CreateLabourerRequest) => Promise<void>;
-  onUpdateLabourer?: (payload: UpdateLabourerRequest) => Promise<void>;
+  onUpdateLabourer?: (payload: UpdateLabourerRequest, file?: File | null, removeImage?: boolean) => Promise<void>;
   onCreateEmployee?: (payload: CreateEmployeeRequest) => Promise<void>;
-  onUpdateEmployee?: (payload: UpdateEmployeeRequest) => Promise<void>;
+  onUpdateEmployee?: (payload: UpdateEmployeeRequest, file?: File | null, removeImage?: boolean) => Promise<void>;
   onCreateRequest?: (payload: MaintenanceRequest) => Promise<void>;
-  onUpdateRequest?: (payload: MaintenanceRequest) => Promise<void>;
+  onUpdateRequest?: (payload: MaintenanceRequest, file?: File | null, removeImage?: boolean) => Promise<void>;
   onCreateExpense?: (payload: Expense) => Promise<void>;
-  onUpdateExpense?: (payload: Expense) => Promise<void>;
+  onUpdateExpense?: (payload: Expense, file?: File | null, removeImage?: boolean) => Promise<void>;
   onCreateTask?: (payload: CreateTaskRequest) => Promise<void>;
   onUpdateTask?: (payload: UpdateTaskRequest) => Promise<void>;
   onCreateCompany?: (payload: CreateCompanyRequest) => Promise<void>;
@@ -57,7 +57,6 @@ type FormModalProps = {
   onUpdateGarden?: (payload: UpdateGardenRequest) => Promise<void>;
 };
 
-// ... existing form states ...
 type LabourerFormState = {
   name: string;
   type: "permanent" | "casual" | "temporary";
@@ -212,8 +211,8 @@ export const FormModal = ({
   const [companyFormData, setCompanyFormData] = useState<CompanyFormState>(createInitialCompanyState);
   const [gardenFormData, setGardenFormData] = useState<GardenFormState>(createInitialGardenState);
 
-  const [companyImageFile, setCompanyImageFile] = useState<File | null>(null);
-  const [removeCompanyImage, setRemoveCompanyImage] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -226,8 +225,8 @@ export const FormModal = ({
       setTaskFormData(createInitialTaskState);
       setCompanyFormData(createInitialCompanyState);
       setGardenFormData(createInitialGardenState);
-      setCompanyImageFile(null);
-      setRemoveCompanyImage(false);
+      setImageFile(null);
+      setRemoveImage(false);
       setError(null);
       return;
     }
@@ -293,11 +292,7 @@ export const FormModal = ({
     }
   }, [isOpen, mode, type, labourer, employee, request, expense, task, company, gardenData]);
 
-  // Snapshots logic omitted for brevity as Company/Garden fields are mostly mandatory or simple.
-  // Validation logic can be simplified to check required fields.
-
   const canSubmit = useMemo(() => {
-    // simplified validation
     if (type === "company") {
       return (
         companyFormData.name.trim().length > 0 &&
@@ -314,13 +309,11 @@ export const FormModal = ({
         gardenFormData.pincode.trim().length > 0
       );
     }
-    // ... keep existing checks for others or simplify ...
     return true;
   }, [type, companyFormData, gardenFormData]);
 
   if (!isOpen) return null;
 
-  // Handlers
   const handleCompanyChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCompanyFormData((prev) => ({ ...prev, [name]: value }));
@@ -333,13 +326,11 @@ export const FormModal = ({
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setCompanyImageFile(e.target.files[0]);
-      setRemoveCompanyImage(false);
+      setImageFile(e.target.files[0]);
+      setRemoveImage(false);
     }
   };
 
-  // Generic handle change for existing forms
-  // ... reuse existing handlers logic ...
   const handleLabourerChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setLabourerFormData((prev) => ({ ...prev, [name]: value }));
@@ -369,7 +360,7 @@ export const FormModal = ({
       if (type === "company") {
         if (!onCreateCompany || !onUpdateCompany) return;
         const payload = {
-          companyid: company ? company.companyid : "", // for update
+          companyid: company ? company.companyid : "",
           name: companyFormData.name,
           state: companyFormData.state,
           district: companyFormData.district,
@@ -382,13 +373,13 @@ export const FormModal = ({
         if (mode === "create") {
           await onCreateCompany(payload);
         } else {
-          await onUpdateCompany(payload, companyImageFile, removeCompanyImage);
+          await onUpdateCompany(payload, imageFile, removeImage);
         }
       } else if (type === "garden") {
         if (!onCreateGarden || !onUpdateGarden) return;
         const payload = {
-          gardenid: gardenData ? gardenData.gardenid : "", // for update
-          companyid: companyIdForGarden || "", // for create
+          gardenid: gardenData ? gardenData.gardenid : "",
+          companyid: companyIdForGarden || "",
           name: gardenFormData.name,
           state: gardenFormData.state,
           district: gardenFormData.district,
@@ -401,7 +392,6 @@ export const FormModal = ({
           await onUpdateGarden(payload);
         }
       } else if (type === "labourer" && onCreateLabourer && onUpdateLabourer) {
-         // Existing logic
          if (mode === "create") {
             await onCreateLabourer({
                 ...labourerFormData,
@@ -414,7 +404,7 @@ export const FormModal = ({
                 ...labourerFormData,
                 name: labourerFormData.name.trim(),
                 address_details: labourerFormData.address_details.trim()
-            });
+            }, imageFile, removeImage);
          }
       } else if (type === "employee" && onCreateEmployee && onUpdateEmployee) {
          if (mode === "create") {
@@ -424,7 +414,7 @@ export const FormModal = ({
                 employeeid: employee.employeeid,
                 ...employeeFormData,
                 name: employeeFormData.name.trim()
-            });
+            }, imageFile, removeImage);
          }
       } else if (type === "request" && onCreateRequest && onUpdateRequest) {
          const ids = requestFormData.ids.split(",").map(id => id.trim()).filter(id => id.length > 0);
@@ -440,7 +430,7 @@ export const FormModal = ({
             status: request ? request.status : "under_review" as const
          };
          if (mode === "create") await onCreateRequest(payload);
-         else await onUpdateRequest(payload);
+         else await onUpdateRequest(payload, imageFile, removeImage);
       } else if (type === "expense" && onCreateExpense && onUpdateExpense) {
          const points = expenseFormData.points.split(",").map(p => p.trim()).filter(p => p.length > 0);
          const payload = {
@@ -453,7 +443,7 @@ export const FormModal = ({
             status: expense ? expense.status : "unpaid" as const
          };
          if (mode === "create") await onCreateExpense(payload);
-         else await onUpdateExpense(payload);
+         else await onUpdateExpense(payload, imageFile, removeImage);
       } else if (type === "task" && onCreateTask && onUpdateTask) {
          const points = taskFormData.points.split(",").map(p => p.trim()).filter(p => p.length > 0);
          if (mode === "create") {
@@ -479,6 +469,28 @@ export const FormModal = ({
       setError((submitError as Error).message || "Failed to submit form.");
     }
   };
+
+  const renderImageUpload = (imageUrl?: string) => (
+    <div style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "16px" }}>
+      <label className="field-label">Image</label>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+        {imageUrl && !removeImage && (
+          <img src={imageUrl} alt="Current" style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover" }} />
+        )}
+        <input type="file" accept="image/*" onChange={handleFileChange} style={{ fontSize: "13px" }} />
+        {imageUrl && (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setRemoveImage(!removeImage)}
+            style={{ fontSize: "12px", padding: "4px 8px" }}
+          >
+            {removeImage ? "Undo Remove" : "Remove"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   const renderCompanyForm = () => (
     <>
@@ -515,27 +527,7 @@ export const FormModal = ({
         </label>
       </div>
 
-      {mode === "update" && (
-        <div style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "16px" }}>
-          <label className="field-label">Company Image</label>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
-            {company?.image && !removeCompanyImage && (
-              <img src={company.image} alt="Company" style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover" }} />
-            )}
-            <input type="file" accept="image/*" onChange={handleFileChange} style={{ fontSize: "13px" }} />
-            {company?.image && (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setRemoveCompanyImage(!removeCompanyImage)}
-                style={{ fontSize: "12px", padding: "4px 8px" }}
-              >
-                {removeCompanyImage ? "Undo Remove" : "Remove"}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {mode === "update" && renderImageUpload(company?.image)}
     </>
   );
 
@@ -561,9 +553,6 @@ export const FormModal = ({
       </label>
     </>
   );
-
-  // Reuse existing render functions for other types (copy-paste from previous logic or just assume they are there)
-  // To save space/tokens I will inline them here simply as I am rewriting the file.
 
   const renderLabourerForm = () => (
     <>
@@ -610,6 +599,7 @@ export const FormModal = ({
         Address
         <textarea className="field-input" name="address_details" value={labourerFormData.address_details} onChange={handleLabourerChange} required />
       </label>
+      {mode === "update" && renderImageUpload(labourer?.image)}
     </>
   );
 
@@ -640,6 +630,7 @@ export const FormModal = ({
           </select>
         </label>
       )}
+      {mode === "update" && renderImageUpload(employee?.image)}
     </>
   );
 
@@ -681,6 +672,7 @@ export const FormModal = ({
         Points
         <textarea className="field-input" name="points" value={requestFormData.points} onChange={handleRequestChange} required />
       </label>
+      {mode === "update" && renderImageUpload(request?.image)}
     </>
   );
 
@@ -715,6 +707,7 @@ export const FormModal = ({
         Points
         <textarea className="field-input" name="points" value={expenseFormData.points} onChange={handleExpenseChange} required />
       </label>
+      {mode === "update" && renderImageUpload(expense?.image)}
     </>
   );
 

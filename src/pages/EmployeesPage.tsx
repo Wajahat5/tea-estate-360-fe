@@ -91,11 +91,21 @@ export const EmployeesPage = () => {
     }
   };
 
-  const handleUpdateEmployee = async (payload: UpdateEmployeeRequest) => {
+  const handleUpdateEmployee = async (
+    payload: UpdateEmployeeRequest,
+    file?: File | null,
+    removeImage?: boolean
+  ) => {
     setIsSubmitting(true);
     setError(null);
     try {
       await apiService.employee.update(payload);
+      if (removeImage) {
+        await apiService.employee.removeImage(payload.employeeid);
+      }
+      if (file) {
+        await apiService.employee.uploadImage(payload.employeeid, file);
+      }
       if (gardenid) {
         await loadEmployees(gardenid);
       }
@@ -186,6 +196,7 @@ export const EmployeesPage = () => {
           <table className="table">
             <thead>
               <tr>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Profession</th>
                 <th>Phone</th>
@@ -195,6 +206,29 @@ export const EmployeesPage = () => {
             <tbody>
               {employees.map((employee) => (
                 <tr key={employee.employeeid}>
+                  <td>
+                    {employee.image ? (
+                      <img
+                        src={employee.image}
+                        alt={employee.name}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          objectFit: "cover"
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          background: "#e5e7eb"
+                        }}
+                      />
+                    )}
+                  </td>
                   <td>{employee.name}</td>
                   <td>{employee.profession}</td>
                   <td>{employee.phone}</td>

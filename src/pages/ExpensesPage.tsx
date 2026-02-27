@@ -97,11 +97,24 @@ export const ExpensesPage = () => {
     }
   };
 
-  const handleUpdateExpense = async (payload: Expense) => {
+  const handleUpdateExpense = async (
+    payload: Expense,
+    file?: File | null,
+    removeImage?: boolean
+  ) => {
     setIsSubmitting(true);
     setError(null);
     try {
       await apiService.expenses.update(payload);
+      if (removeImage) {
+        await apiService.expenses.removeImage(payload.expenseid);
+      }
+      if (file) {
+        // expenses supports multiple files but FormModal currently handles single file for consistency
+        // or we can just send it as an array if needed.
+        // The API `uploadImages` expects `File[]`.
+        await apiService.expenses.uploadImages(payload.expenseid, [file]);
+      }
       if (gardenid && from && to) {
         await loadExpenses(gardenid, from, to, status);
       }
@@ -242,6 +255,7 @@ export const ExpensesPage = () => {
           <table className="table">
             <thead>
               <tr>
+                <th>Image</th>
                 <th>Title</th>
                 <th>Date</th>
                 <th>Request</th>
@@ -253,6 +267,29 @@ export const ExpensesPage = () => {
             <tbody>
               {expenses.map((expense) => (
                 <tr key={expense.expenseid}>
+                  <td>
+                    {expense.image ? (
+                      <img
+                        src={expense.image}
+                        alt={expense.title}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          objectFit: "cover"
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          background: "#e5e7eb"
+                        }}
+                      />
+                    )}
+                  </td>
                   <td>{expense.title}</td>
                   <td>{expense.date}</td>
                   <td>{expense.req_id ?? "-"}</td>

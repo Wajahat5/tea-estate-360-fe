@@ -3,7 +3,12 @@ import { auth } from "./auth";
 import { store } from "../store";
 import type {
   CompanyListItem,
+  CreateCompanyRequest,
+  CreateEmployeeRequest,
+  CreateGardenRequest,
   CreateLabourerRequest,
+  CreateTaskRequest,
+  CreateUserRequest,
   DashboardAlertsResponse,
   DashboardGardenBreakdownResponse,
   DashboardOverviewResponse,
@@ -15,12 +20,17 @@ import type {
   Garden,
   Labourer,
   LoginUserRequest,
-  CreateUserRequest,
+  MaintenanceRequest,
   RequestsFetchItem,
   Task,
+  UpdateCompanyRequest,
+  UpdateEmployeeRequest,
+  UpdateGardenRequest,
   UpdateLabourerRequest,
+  UpdateTaskRequest,
   User
 } from "../types/api";
+import { setError } from "../store/errorSlice";
 
 const BASE_URL = config.apiBaseUrl.replace(/\/$/, "");
 
@@ -119,6 +129,7 @@ type RawEmployee = {
   name: string;
   profession: string;
   phone: string;
+  image?: string;
 };
 
 type RawLabourer = {
@@ -130,9 +141,8 @@ type RawLabourer = {
   married_status: boolean | string;
   gender: "male" | "female" | "other";
   address_details: string;
+  image?: string;
 };
-
-import { setError } from "../store/errorSlice";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = store.getState().auth.token || auth.getToken();
@@ -287,8 +297,6 @@ export const httpApi = {
         method: "PATCH",
         body: JSON.stringify(body)
       }),
-    // Swagger only defines /garden/fetch/{gardenid}; there is no list endpoint.
-    // For now, return an empty list to avoid 404s until a real list API is added.
     list: async () => {
       return [] as Garden[];
     }
@@ -307,7 +315,8 @@ export const httpApi = {
               ? String(item.married_status)
               : item.married_status,
           gender: item.gender,
-          address_details: item.address_details
+          address_details: item.address_details,
+          image: item.image
         })
       );
     },
@@ -329,7 +338,12 @@ export const httpApi = {
         method: "POST",
         body: formData
       });
-    }
+    },
+    removeImage: (labourerid: string) =>
+      request<void>("/labourer/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ labourerid })
+      })
   },
   employee: {
     create: (body: CreateEmployeeRequest) =>
@@ -359,7 +373,8 @@ export const httpApi = {
             gardenid: employee.gardenid,
             name: employee.name,
             profession: employee.profession,
-            phone: employee.phone
+            phone: employee.phone,
+            image: employee.image
           })
         )
         .filter((employee) => !employee.gardenid || employee.gardenid === gardenid);
@@ -372,7 +387,12 @@ export const httpApi = {
         method: "POST",
         body: formData
       });
-    }
+    },
+    removeImage: (employeeid: string) =>
+      request<void>("/employee/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ employeeid })
+      })
   },
   requests: {
     create: (body: MaintenanceRequest) =>
@@ -427,7 +447,12 @@ export const httpApi = {
         method: "POST",
         body: formData
       });
-    }
+    },
+    removeImage: (requestid: string) =>
+      request<void>("/requests/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ requestid })
+      })
   },
   expenses: {
     create: (body: Expense) =>
@@ -460,6 +485,7 @@ export const httpApi = {
         Array<
           Omit<Expense, "expenseid"> & {
             _id: string;
+            image?: string;
           }
         >
       >(
@@ -474,7 +500,8 @@ export const httpApi = {
           title: item.title,
           req_id: item.req_id ?? null,
           points: item.points || [],
-          status: item.status
+          status: item.status,
+          image: item.image
         })
       );
     },
@@ -486,7 +513,12 @@ export const httpApi = {
         method: "POST",
         body: formData
       });
-    }
+    },
+    removeImage: (expenseid: string) =>
+      request<void>("/expense/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ expenseid })
+      })
   },
   tasks: {
     create: (body: CreateTaskRequest) =>

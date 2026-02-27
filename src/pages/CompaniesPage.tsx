@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiService } from "../services/apiService";
+import { auth } from "../services/auth";
 import {
   fetchCompaniesFailure,
   fetchCompaniesSuccess
@@ -42,6 +43,7 @@ export const CompaniesPage = () => {
     try {
       const data = await apiService.company.list();
       dispatch(fetchCompaniesSuccess(data));
+      auth.setCompanies(data);
     } catch (err) {
       dispatch(
         fetchCompaniesFailure(

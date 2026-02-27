@@ -71,6 +71,10 @@ export interface LoginUserRequest {
 export interface UpdateUserRequest {
   userid: string;
   gardenid: string;
+  name?: string;
+  phone?: string;
+  profession?: string;
+  email?: string;
 }
 
 export interface Garden {

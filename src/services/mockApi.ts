@@ -210,8 +210,30 @@ export const mockApi = {
       if (index === -1) {
         throw new Error("User not found");
       }
-      users[index] = { ...users[index], gardenid: payload.gardenid };
+      users[index] = {
+        ...users[index],
+        gardenid: payload.gardenid,
+        ...(payload.name ? { name: payload.name } : {}),
+        ...(payload.phone ? { phone: payload.phone } : {}),
+        ...(payload.profession ? { profession: payload.profession } : {}),
+        ...(payload.email ? { email: payload.email } : {})
+      };
       return { ...users[index], password: undefined } as unknown as User;
+    },
+
+    async uploadImage(userid: string, _file: File): Promise<void> {
+      await delay(500);
+      const user = users.find((u) => u.userid === userid);
+      if (!user) throw new Error("User not found");
+      // In a real app we'd save the file and update the URL.
+      // Here we just acknowledge.
+    },
+
+    async removeImage(userid: string): Promise<void> {
+      await delay(300);
+      const user = users.find((u) => u.userid === userid);
+      if (!user) throw new Error("User not found");
+      // In a real app we'd remove the file reference.
     },
 
     async logout(): Promise<void> {

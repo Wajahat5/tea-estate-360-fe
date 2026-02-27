@@ -16,7 +16,9 @@ import type {
   UpdateEmployeeRequest,
   UpdateGardenRequest,
   UpdateLabourerRequest,
-  UpdateTaskRequest
+  UpdateTaskRequest,
+  User,
+  UpdateUserRequest
 } from "../types/api";
 
 type GardenOption = {
@@ -28,7 +30,7 @@ type FormModalProps = {
   isOpen: boolean;
   isSubmitting: boolean;
   mode: "create" | "update";
-  type: "labourer" | "employee" | "request" | "expense" | "task" | "company" | "garden";
+  type: "labourer" | "employee" | "request" | "expense" | "task" | "company" | "garden" | "user";
   gardens?: GardenOption[];
   labourer?: Labourer;
   employee?: Employee;
@@ -37,6 +39,7 @@ type FormModalProps = {
   task?: Task;
   company?: CompanyListItem;
   gardenData?: Garden;
+  user?: User;
   companyIdForGarden?: string;
 
   onClose: () => void;
@@ -55,6 +58,7 @@ type FormModalProps = {
   onUpdateCompany?: (payload: UpdateCompanyRequest, file?: File | null, removeImage?: boolean) => Promise<void>;
   onCreateGarden?: (payload: CreateGardenRequest) => Promise<void>;
   onUpdateGarden?: (payload: UpdateGardenRequest) => Promise<void>;
+  onUpdateUser?: (payload: UpdateUserRequest, file?: File | null, removeImage?: boolean) => Promise<void>;
 };
 
 type LabourerFormState = {
@@ -115,6 +119,14 @@ type GardenFormState = {
   pincode: string;
 };
 
+type UserFormState = {
+  name: string;
+  phone: string;
+  profession: string;
+  email: string;
+  gardenid: string;
+};
+
 const createInitialLabourerState: LabourerFormState = {
   name: "",
   type: "permanent",
@@ -173,6 +185,14 @@ const createInitialGardenState: GardenFormState = {
   pincode: ""
 };
 
+const createInitialUserState: UserFormState = {
+  name: "",
+  phone: "",
+  profession: "",
+  email: "",
+  gardenid: ""
+};
+
 export const FormModal = ({
   isOpen,
   isSubmitting,
@@ -186,6 +206,7 @@ export const FormModal = ({
   task,
   company,
   gardenData,
+  user,
   companyIdForGarden,
   onClose,
   onCreateLabourer,
@@ -201,7 +222,8 @@ export const FormModal = ({
   onCreateCompany,
   onUpdateCompany,
   onCreateGarden,
-  onUpdateGarden
+  onUpdateGarden,
+  onUpdateUser
 }: FormModalProps) => {
   const [labourerFormData, setLabourerFormData] = useState<LabourerFormState>(createInitialLabourerState);
   const [employeeFormData, setEmployeeFormData] = useState<EmployeeFormState>(createInitialEmployeeState);
@@ -210,6 +232,7 @@ export const FormModal = ({
   const [taskFormData, setTaskFormData] = useState<TaskFormState>(createInitialTaskState);
   const [companyFormData, setCompanyFormData] = useState<CompanyFormState>(createInitialCompanyState);
   const [gardenFormData, setGardenFormData] = useState<GardenFormState>(createInitialGardenState);
+  const [userFormData, setUserFormData] = useState<UserFormState>(createInitialUserState);
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
@@ -225,6 +248,7 @@ export const FormModal = ({
       setTaskFormData(createInitialTaskState);
       setCompanyFormData(createInitialCompanyState);
       setGardenFormData(createInitialGardenState);
+      setUserFormData(createInitialUserState);
       setImageFile(null);
       setRemoveImage(false);
       setError(null);
@@ -289,8 +313,16 @@ export const FormModal = ({
         district: gardenData.district || "",
         pincode: gardenData.pincode || ""
       });
+    } else if (type === "user" && mode === "update" && user) {
+      setUserFormData({
+        name: user.name || "",
+        phone: user.phone || "",
+        profession: user.profession || "",
+        email: user.email || "",
+        gardenid: user.gardenid || ""
+      });
     }
-  }, [isOpen, mode, type, labourer, employee, request, expense, task, company, gardenData]);
+  }, [isOpen, mode, type, labourer, employee, request, expense, task, company, gardenData, user]);
 
   const canSubmit = useMemo(() => {
     if (type === "company") {
@@ -322,6 +354,11 @@ export const FormModal = ({
   const handleGardenChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setGardenFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUserChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setUserFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -391,6 +428,17 @@ export const FormModal = ({
         } else {
           await onUpdateGarden(payload);
         }
+      } else if (type === "user") {
+        if (!onUpdateUser || !user) return;
+        const payload: UpdateUserRequest = {
+          userid: user.userid,
+          gardenid: userFormData.gardenid,
+          name: userFormData.name.trim(),
+          phone: userFormData.phone.trim(),
+          profession: userFormData.profession.trim(),
+          email: userFormData.email.trim()
+        };
+        await onUpdateUser(payload, imageFile, removeImage);
       } else if (type === "labourer" && onCreateLabourer && onUpdateLabourer) {
          if (mode === "create") {
             await onCreateLabourer({
@@ -528,6 +576,40 @@ export const FormModal = ({
       </div>
 
       {mode === "update" && renderImageUpload(company?.image)}
+    </>
+  );
+
+  const renderUserForm = () => (
+    <>
+      <label className="field-label">
+        Name
+        <input className="field-input" name="name" value={userFormData.name} onChange={handleUserChange} required />
+      </label>
+      <label className="field-label">
+        Phone
+        <input className="field-input" name="phone" value={userFormData.phone} onChange={handleUserChange} required />
+      </label>
+      <label className="field-label">
+        Profession
+        <input className="field-input" name="profession" value={userFormData.profession} onChange={handleUserChange} required />
+      </label>
+      <label className="field-label">
+        Email
+        <input className="field-input" name="email" value={userFormData.email} onChange={handleUserChange} />
+      </label>
+      {/* Assuming gardenid might be needed if the user can change their garden, or just for the API payload requirement */}
+      <label className="field-label">
+        Garden
+        <select className="field-input" name="gardenid" value={userFormData.gardenid} onChange={handleUserChange} required>
+            <option value="">Select garden</option>
+            {gardens.map((g) => (
+              <option key={g.gardenid} value={g.gardenid}>
+                {g.name}
+              </option>
+            ))}
+        </select>
+      </label>
+      {mode === "update" && renderImageUpload(user?.image)}
     </>
   );
 
@@ -761,6 +843,7 @@ export const FormModal = ({
         <form onSubmit={handleSubmit} className="auth-form">
           {type === "company" ? renderCompanyForm() :
            type === "garden" ? renderGardenForm() :
+           type === "user" ? renderUserForm() :
            type === "labourer" ? renderLabourerForm() :
            type === "employee" ? renderEmployeeForm() :
            type === "request" ? renderRequestForm() :

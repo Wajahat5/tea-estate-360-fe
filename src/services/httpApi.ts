@@ -226,6 +226,25 @@ export const httpApi = {
         method: "POST",
         body: JSON.stringify(body)
       }),
+    update: (body: UpdateUserRequest) =>
+      request<User>("/user/update", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    uploadImage: (userid: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("userid", userid);
+      return request<void>("/user/upload-image", {
+        method: "POST",
+        body: formData
+      });
+    },
+    removeImage: (userid: string) =>
+      request<void>("/user/remove-image", {
+        method: "DELETE",
+        body: JSON.stringify({ userid })
+      }),
     logout: () =>
       request<void>("/user/logout", {
         method: "POST"

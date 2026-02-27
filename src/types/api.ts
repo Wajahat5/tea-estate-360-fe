@@ -214,6 +214,7 @@ export interface Expense {
   title: string;
   req_id: string | null;
   points: string[];
+  amount?: number;
   status: ExpenseStatus;
   image?: string;
 }

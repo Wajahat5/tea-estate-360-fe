@@ -135,6 +135,7 @@ let expenses: Expense[] = [
     title: "Fertilizer purchase",
     req_id: requests[1].requestid,
     points: ["Urea", "Potash", "Micro nutrients"],
+    amount: 12500,
     status: "unpaid"
   },
   {
@@ -144,6 +145,7 @@ let expenses: Expense[] = [
     title: "Equipment maintenance",
     req_id: null,
     points: ["Pump service", "Generator diesel"],
+    amount: 4500,
     status: "paid"
   }
 ];
@@ -523,6 +525,7 @@ export const mockApi = {
       await delay(300);
       const newExpense: Expense = {
         ...expense,
+        amount: expense.amount || 0,
         expenseid: crypto.randomUUID(),
         status: "unpaid"
       };
@@ -537,7 +540,11 @@ export const mockApi = {
       if (index === -1) {
         throw new Error("Expense not found");
       }
-      expenses[index] = { ...expenses[index], ...payload };
+      expenses[index] = {
+        ...expenses[index],
+        ...payload,
+        amount: payload.amount !== undefined ? payload.amount : expenses[index].amount
+      };
       return expenses[index];
     },
     async delete(expenseid: string): Promise<void> {

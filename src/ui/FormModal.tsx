@@ -92,6 +92,7 @@ type ExpenseFormState = {
   gardenid: string;
   req_id: string;
   points: string;
+  amount: string;
 };
 
 type TaskFormState = {
@@ -157,7 +158,8 @@ const createInitialExpenseState: ExpenseFormState = {
   date: "",
   gardenid: "",
   req_id: "",
-  points: ""
+  points: "",
+  amount: ""
 };
 
 const createInitialTaskState: TaskFormState = {
@@ -286,7 +288,8 @@ export const FormModal = ({
         date: expense.date || "",
         gardenid: expense.gardenid || "",
         req_id: expense.req_id || "",
-        points: (expense.points || []).join(", ")
+        points: (expense.points || []).join(", "),
+        amount: expense.amount ? String(expense.amount) : ""
       });
     } else if (type === "task" && mode === "update" && task) {
       setTaskFormData({
@@ -488,6 +491,7 @@ export const FormModal = ({
             title: expenseFormData.title.trim(),
             req_id: expenseFormData.req_id.trim() || null,
             points,
+            amount: Number(expenseFormData.amount) || 0,
             status: expense ? expense.status : "unpaid" as const
          };
          if (mode === "create") await onCreateExpense(payload);
@@ -784,6 +788,10 @@ export const FormModal = ({
       <label className="field-label">
         Req ID
         <input className="field-input" name="req_id" value={expenseFormData.req_id} onChange={handleExpenseChange} />
+      </label>
+      <label className="field-label">
+        Amount
+        <input className="field-input" type="number" name="amount" value={expenseFormData.amount} onChange={handleExpenseChange} />
       </label>
       <label className="field-label">
         Points

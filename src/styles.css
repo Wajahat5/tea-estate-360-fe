@@ -206,6 +206,7 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
+  width: 100%; /* Ensure full width */
 }
 
 .topbar {
@@ -780,20 +781,63 @@ button {
   font-style: italic;
 }
 
+/* Responsive sidebar */
+
+.mobile-menu-button {
+  display: none;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  color: #374151;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .dashboard-layout {
-    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
   }
 
   .sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    width: 240px;
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+
+  .mobile-menu-button {
+    display: block;
+  }
+
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .content {
+    padding: 16px;
   }
 }

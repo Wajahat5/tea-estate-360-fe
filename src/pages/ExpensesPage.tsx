@@ -260,6 +260,7 @@ export const ExpensesPage = () => {
                 <th>Date</th>
                 <th>Request</th>
                 <th>Items</th>
+                <th>Amount</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -294,6 +295,7 @@ export const ExpensesPage = () => {
                   <td>{expense.date}</td>
                   <td>{expense.req_id ?? "-"}</td>
                   <td>{expense.points.join(", ")}</td>
+                  <td>{expense.amount ?? 0}</td>
                   <td>
                     <button
                       type="button"

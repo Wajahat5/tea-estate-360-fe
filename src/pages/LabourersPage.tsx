@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
 import type {
@@ -21,6 +21,7 @@ export const LabourersPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [gardenid, setGardenid] = useState("");
 
   const gardens = useMemo(() => {
     const ownedGardens = companies
@@ -40,16 +41,18 @@ export const LabourersPage = () => {
     return Array.from(unique.values());
   }, [companies, user?.userid]);
 
-  const loadLabourers = async () => {
-    const data = await apiService.labourer.list();
-    setLabourers(data);
-  };
+  const loadLabourers = useCallback(async () => {
+    try {
+      const data = await apiService.labourer.fetch(gardenid ? { gardenid } : {});
+      setLabourers(data);
+    } catch (fetchError) {
+      setError((fetchError as Error).message || "Failed to fetch labourers");
+    }
+  }, [gardenid]);
 
   useEffect(() => {
-    loadLabourers().catch((fetchError) => {
-      setError((fetchError as Error).message || "Failed to fetch labourers");
-    });
-  }, []);
+    loadLabourers();
+  }, [loadLabourers]);
 
   const handleCreateLabourer = async (payload: CreateLabourerRequest) => {
     setIsSubmitting(true);
@@ -104,17 +107,33 @@ export const LabourersPage = () => {
       <div className="panel">
         <div className="panel-header">
           <h2 className="panel-title">All labourers</h2>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              setModalMode("create");
-              setSelectedLabourer(undefined);
-              setIsModalOpen(true);
-            }}
-          >
-            Create Labourer
-          </button>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <select
+              className="field-input"
+              value={gardenid}
+              onChange={(e) => setGardenid(e.target.value)}
+              style={{ width: "200px" }}
+            >
+              <option value="">All Gardens</option>
+              {gardens.map((g) => (
+                <option key={g.gardenid} value={g.gardenid}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                setModalMode("create");
+                setSelectedLabourer(undefined);
+                setIsModalOpen(true);
+              }}
+              style={{ marginTop: 0 }}
+            >
+              Create Labourer
+            </button>
+          </div>
         </div>
         {error && <p className="field-error">{error}</p>}
         <table className="table">

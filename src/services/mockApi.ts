@@ -365,9 +365,13 @@ export const mockApi = {
       const labourer = labourers.find((l) => l.labourerid === labourerid);
       if (!labourer) throw new Error("Labourer not found");
     },
-    async list(): Promise<Labourer[]> {
+    async fetch(filter?: { gardenid?: string }): Promise<Labourer[]> {
       await delay(250);
-      return [...labourers];
+      let result = [...labourers];
+      if (filter?.gardenid) {
+        result = result.filter(l => l.gardenid === filter.gardenid);
+      }
+      return result;
     }
   },
 
@@ -634,295 +638,26 @@ export const mockApi = {
   },
 
   dashboard: {
-    async overview(query: DashboardQuery = {}): Promise<DashboardOverviewResponse> {
+    async summary(): Promise<import("../types/api").DashboardSummaryResponse> {
       await delay(250);
-      const scopedGardenIds = query.gardenid
-        ? [query.gardenid]
-        : gardens.map((garden) => garden.gardenid);
-      const scopedCompanyIds = companies.map((company) => company.companyid);
-      const scopedLabourers = labourers.filter((labourer) =>
-        scopedGardenIds.includes(labourer.gardenid)
-      );
-      const scopedEmployees = employees.filter(
-        (employee) => !employee.gardenid || scopedGardenIds.includes(employee.gardenid)
-      );
-      const scopedRequests = requests.filter((request) =>
-        scopedGardenIds.includes(request.gardenid)
-      );
-      const scopedExpenses = expenses.filter((expense) =>
-        scopedGardenIds.includes(expense.gardenid)
-      );
-      const scopedTasks = tasks.filter((task) =>
-        scopedGardenIds.includes(task.gardenid)
-      );
+      const totalLabourers = labourers.length;
+      const totalEmployees = employees.length;
+      const totalReviewRequests = requests.filter(r => r.status === "under_review").length;
+      const totalUnpaidExpenses = expenses.filter(e => e.status === "unpaid").length;
+      const totalNotStartedTasks = tasks.filter(t => t.status === "not_started").length;
+      const totalInProgressTasks = tasks.filter(t => t.status === "under_progress").length;
+
       return {
-        scope: {
-          companyids: scopedCompanyIds,
-          gardenids: scopedGardenIds,
-          from: query.from || "2026-02-01",
-          to: query.to || "2026-02-26",
-          tz: query.tz || "Asia/Kolkata"
-        },
-        kpis: {
-          total_labourers: scopedLabourers.length,
-          active_labourers: scopedLabourers.length,
-          total_employees: scopedEmployees.length,
-          present_days_total: scopedLabourers.length * 26,
-          wages_due: scopedLabourers.length * 5200,
-          wages_paid: scopedLabourers.length * 4300,
-          expense_unpaid_total: scopedExpenses
-            .filter((expense) => expense.status === "unpaid")
-            .length * 3000,
-          expense_paid_total: scopedExpenses
-            .filter((expense) => expense.status === "paid")
-            .length * 3000,
-          pending_requests_count: scopedRequests.filter(
-            (request) => request.status === "under_review"
-          ).length,
-          tasks_pending_count: scopedTasks.filter(
-            (task) => task.status === "not_started"
-          ).length,
-          tasks_in_progress_count: scopedTasks.filter(
-            (task) => task.status === "under_progress"
-          ).length,
-          tasks_completed_count: scopedTasks.filter(
-            (task) => task.status === "completed"
-          ).length
-        },
-        quick_status: {
-          requests: {
-            under_review: scopedRequests.filter(
-              (request) => request.status === "under_review"
-            ).length,
-            approved: scopedRequests.filter(
-              (request) => request.status === "approved"
-            ).length
-          },
-          expenses: {
-            paid: scopedExpenses.filter((expense) => expense.status === "paid")
-              .length,
-            unpaid: scopedExpenses.filter((expense) => expense.status === "unpaid")
-              .length
-          },
-          tasks: {
-            not_started: scopedTasks.filter(
-              (task) => task.status === "not_started"
-            ).length,
-            under_progress: scopedTasks.filter(
-              (task) => task.status === "under_progress"
-            ).length,
-            completed: scopedTasks.filter((task) => task.status === "completed")
-              .length
-          }
-        },
-        updated_at: new Date().toISOString()
-      };
-    },
-    async trends(): Promise<DashboardTrendsResponse> {
-      await delay(200);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        series: [
-          {
-            key: "attendance",
-            label: "Attendance",
-            points: [{ x: "2026-02-01", y: labourers.length * 20 }]
-          },
-          {
-            key: "wages_paid",
-            label: "Wages Paid",
-            points: [{ x: "2026-02-01", y: labourers.length * 4300 }]
-          },
-          {
-            key: "wages_due",
-            label: "Wages Due",
-            points: [{ x: "2026-02-01", y: labourers.length * 5200 }]
-          },
-          {
-            key: "expenses",
-            label: "Expenses",
-            points: [
-              {
-                x: "2026-02-01",
-                paid: expenses.filter((expense) => expense.status === "paid")
-                  .length,
-                unpaid: expenses.filter((expense) => expense.status === "unpaid")
-                  .length
-              }
-            ]
-          },
-          {
-            key: "requests",
-            label: "Requests",
-            points: [
-              {
-                x: "2026-02-01",
-                under_review: requests.filter(
-                  (request) => request.status === "under_review"
-                ).length,
-                approved: requests.filter(
-                  (request) => request.status === "approved"
-                ).length
-              }
-            ]
-          },
-          {
-            key: "tasks",
-            label: "Tasks",
-            points: [
-              {
-                x: "2026-02-01",
-                not_started: tasks.filter((task) => task.status === "not_started")
-                  .length,
-                under_progress: tasks.filter(
-                  (task) => task.status === "under_progress"
-                ).length,
-                completed: tasks.filter((task) => task.status === "completed")
-                  .length
-              }
-            ]
-          }
-        ]
-      };
-    },
-    async recentActivity(): Promise<DashboardRecentActivityResponse> {
-      await delay(200);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        items: [
-          ...requests.slice(0, 3).map((request) => ({
-            id: `req_${request.requestid}`,
-            type: "request" as const,
-            title: request.title,
-            gardenid: request.gardenid,
-            garden_name:
-              gardens.find((garden) => garden.gardenid === request.gardenid)?.name ||
-              request.gardenid,
-            status: request.status,
-            date: request.date,
-            meta: { points_count: request.points.length }
-          })),
-          ...expenses.slice(0, 3).map((expense) => ({
-            id: `exp_${expense.expenseid}`,
-            type: "expense" as const,
-            title: expense.title,
-            gardenid: expense.gardenid,
-            garden_name:
-              gardens.find((garden) => garden.gardenid === expense.gardenid)?.name ||
-              expense.gardenid,
-            status: expense.status,
-            date: expense.date,
-            meta: { amount: expense.points.length * 1000 }
-          })),
-          ...tasks.slice(0, 3).map((task) => ({
-            id: `task_${task.taskid}`,
-            type: "task" as const,
-            title: task.title,
-            gardenid: task.gardenid,
-            garden_name:
-              gardens.find((garden) => garden.gardenid === task.gardenid)?.name ||
-              task.gardenid,
-            status: task.status,
-            date: task.date,
-            meta: {}
-          }))
-        ].slice(0, 20)
-      };
-    },
-    async alerts(): Promise<DashboardAlertsResponse> {
-      await delay(150);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        alerts: [
-          {
-            code: "EXPENSE_UNPAID_HIGH",
-            severity: "warning",
-            title: "High unpaid expenses",
-            description: "Unpaid expenses exceeded configured threshold.",
-            count: expenses.filter((expense) => expense.status === "unpaid").length,
-            amount: expenses.filter((expense) => expense.status === "unpaid").length * 3000
-          },
-          {
-            code: "REQUESTS_PENDING",
-            severity: "info",
-            title: "Pending approval requests",
-            description: "Requests waiting for review.",
-            count: requests.filter((request) => request.status === "under_review")
-              .length
-          },
-          {
-            code: "TASKS_NOT_STARTED",
-            severity: "info",
-            title: "Tasks not started",
-            description: "Tasks pending start in selected scope.",
-            count: tasks.filter((task) => task.status === "not_started").length
-          }
-        ]
-      };
-    },
-    async gardenBreakdown(): Promise<DashboardGardenBreakdownResponse> {
-      await delay(180);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        gardens: gardens.map((garden) => ({
-          gardenid: garden.gardenid,
-          garden_name: garden.name,
-          labourers: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length,
-          employees: employees.filter(
-            (employee) => employee.gardenid === garden.gardenid
-          ).length,
-          attendance: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length * 26,
-          wages_due: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length * 5200,
-          wages_paid: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length * 4300,
-          expenses_paid: expenses.filter(
-            (expense) =>
-              expense.gardenid === garden.gardenid && expense.status === "paid"
-          ).length * 3000,
-          expenses_unpaid: expenses.filter(
-            (expense) =>
-              expense.gardenid === garden.gardenid && expense.status === "unpaid"
-          ).length * 3000,
-          requests_under_review: requests.filter(
-            (request) =>
-              request.gardenid === garden.gardenid &&
-              request.status === "under_review"
-          ).length,
-          tasks_not_started: tasks.filter(
-            (task) => task.gardenid === garden.gardenid && task.status === "not_started"
-          ).length,
-          tasks_under_progress: tasks.filter(
-            (task) =>
-              task.gardenid === garden.gardenid && task.status === "under_progress"
-          ).length
-        }))
+        success: true,
+        message: "Dashboard summary fetched successfully",
+        data: {
+          totalLabourers,
+          totalEmployees,
+          totalReviewRequests,
+          totalUnpaidExpenses,
+          totalNotStartedTasks,
+          totalInProgressTasks
+        }
       };
     }
   }

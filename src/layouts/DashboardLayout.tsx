@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { ErrorBanner } from "../ui/ErrorBanner";
 import { FormModal } from "../ui/FormModal";
 import { TeaEstateLogo } from "../ui/TeaEstateLogo";
+import { AccessBlockedModal } from "../ui/AccessBlockedModal";
 import type { UpdateUserRequest } from "../types/api";
 
 const navItems = [
@@ -151,6 +152,7 @@ export const DashboardLayout = () => {
 
   return (
     <div className="dashboard-layout">
+      <AccessBlockedModal />
       {error && (
         <ErrorBanner message={error} onClose={() => dispatch(clearError())} />
       )}

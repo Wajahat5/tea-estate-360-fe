@@ -1,6 +1,7 @@
 import { config } from "../config";
 import { auth } from "./auth";
 import { store } from "../store";
+import { setBlocked } from "../store/authSlice";
 import type {
   CompanyListItem,
   CreateCompanyRequest,
@@ -164,23 +165,38 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
     if (!response.ok) {
       const text = await response.text();
-      // Try to parse JSON error message if possible
       let errorMessage = text || response.statusText;
+      let isBlockedError = false;
       try {
         const jsonError = JSON.parse(text);
         if (jsonError.message) {
           errorMessage = jsonError.message;
         }
+        if (response.status === 400 && jsonError.message === 'Not allowed to use db') {
+            isBlockedError = true;
+        }
       } catch {
         // ignore
       }
+
+      if (isBlockedError) {
+        store.dispatch(setBlocked(true));
+        // We can throw a specific error or generic one, but we don't want to show the error banner.
+        const err = new Error(errorMessage);
+        (err as any).isBlockedError = true;
+        throw err;
+      }
+
       throw new Error(errorMessage);
     }
 
     return (await response.json()) as T;
   } catch (error) {
-    const message = (error as Error).message || "An unexpected error occurred";
-    store.dispatch(setError(message));
+    const err = error as Error & { isBlockedError?: boolean };
+    if (!err.isBlockedError) {
+      const message = err.message || "An unexpected error occurred";
+      store.dispatch(setError(message));
+    }
     throw error;
   }
 }

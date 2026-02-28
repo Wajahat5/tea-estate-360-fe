@@ -195,9 +195,11 @@ export const mockApi = {
         name: payload.name,
         phone: payload.phone,
         profession: payload.profession,
+        db_role: payload.profession === "owner" ? "crud" : "none",
         password: payload.password
       };
-      users.push(newUser);
+      // Keep mock current user up to date for tests
+      users.unshift(newUser); // Put at front so currentUser() finds it
       return {
         user: { ...newUser, password: undefined } as unknown as User,
         token: `mock-token-${newUser.userid}`
@@ -324,6 +326,21 @@ export const mockApi = {
     },
     async list(): Promise<CompanyListItem[]> {
       await delay(200);
+      // Simulate "Not allowed to use db" if the user has db_role === 'none'
+      const currentUserObj = currentUser();
+      if (currentUserObj && currentUserObj.db_role === 'none') {
+         // This mock simulation throws an error similar to what httpApi does
+         const err = new Error("Not allowed to use db");
+         (err as any).isBlockedError = true;
+         // Actually, mockApi doesn't dispatch Redux actions. In a real scenario, httpApi catches 400.
+         // Let's just return what would happen. If we want to simulate it, we can import store.
+         // But the app is configured to use mock APIs. Let's just import store and dispatch for the mock.
+         const { store } = require("../store");
+         const { setBlocked } = require("../store/authSlice");
+         store.dispatch(setBlocked(true));
+         throw err;
+      }
+
       return companies.map((company) => {
         // Mock some access requests for testing UI
         const access_requests = company.access_requests || [];

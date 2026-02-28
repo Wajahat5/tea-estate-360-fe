@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { apiService } from "../services/apiService";
 import type {
   CompanyListItem,
   CreateCompanyRequest,
@@ -30,7 +31,7 @@ type FormModalProps = {
   isOpen: boolean;
   isSubmitting: boolean;
   mode: "create" | "update";
-  type: "labourer" | "employee" | "request" | "expense" | "task" | "company" | "garden" | "user";
+  type: "labourer" | "employee" | "request" | "expense" | "task" | "company" | "garden" | "user" | "company_flow";
   gardens?: GardenOption[];
   labourer?: Labourer;
   employee?: Employee;
@@ -59,6 +60,7 @@ type FormModalProps = {
   onCreateGarden?: (payload: CreateGardenRequest) => Promise<void>;
   onUpdateGarden?: (payload: UpdateGardenRequest) => Promise<void>;
   onUpdateUser?: (payload: UpdateUserRequest, file?: File | null, removeImage?: boolean) => Promise<void>;
+  onCreateCompanyFlow?: (companyPayload: CreateCompanyRequest, gardenPayload: CreateGardenRequest) => Promise<void>;
 };
 
 type LabourerFormState = {
@@ -223,7 +225,8 @@ export const FormModal = ({
   onUpdateCompany,
   onCreateGarden,
   onUpdateGarden,
-  onUpdateUser
+  onUpdateUser,
+  onCreateCompanyFlow
 }: FormModalProps) => {
   const [labourerFormData, setLabourerFormData] = useState<LabourerFormState>(createInitialLabourerState);
   const [employeeFormData, setEmployeeFormData] = useState<EmployeeFormState>(createInitialEmployeeState);
@@ -239,6 +242,13 @@ export const FormModal = ({
 
   const [error, setError] = useState<string | null>(null);
 
+  // State for company_flow
+  const [flowStep, setFlowStep] = useState<"email" | "otp" | "company" | "garden">("email");
+  const [flowEmail, setFlowEmail] = useState("");
+  const [flowOtp, setFlowOtp] = useState("");
+  const [flowCompanyId, setFlowCompanyId] = useState("");
+  const [flowIsLoading, setFlowIsLoading] = useState(false);
+
   useEffect(() => {
     if (!isOpen) {
       setLabourerFormData(createInitialLabourerState);
@@ -252,6 +262,11 @@ export const FormModal = ({
       setImageFile(null);
       setRemoveImage(false);
       setError(null);
+      setFlowStep("email");
+      setFlowEmail("");
+      setFlowOtp("");
+      setFlowCompanyId("");
+      setFlowIsLoading(false);
       return;
     }
 
@@ -394,7 +409,58 @@ export const FormModal = ({
     setError(null);
 
     try {
-      if (type === "company") {
+      if (type === "company_flow") {
+        if (!onCreateCompanyFlow) return;
+
+        if (flowStep === "email") {
+          setFlowIsLoading(true);
+          try {
+            const res = await apiService.company.sendCode({ email: flowEmail });
+            if (res.success) {
+              setFlowCompanyId(res.companyid);
+              setFlowStep("otp");
+            }
+          } finally {
+            setFlowIsLoading(false);
+          }
+          return;
+        } else if (flowStep === "otp") {
+          setFlowIsLoading(true);
+          try {
+            const res = await apiService.company.verifyCode({ email: flowEmail, code: flowOtp });
+            if (res.success) {
+              setFlowCompanyId(res.companyid);
+              setFlowStep("company");
+            }
+          } finally {
+            setFlowIsLoading(false);
+          }
+          return;
+        } else if (flowStep === "company") {
+          setFlowStep("garden");
+          return;
+        } else if (flowStep === "garden") {
+          const cPayload = {
+            companyid: flowCompanyId,
+            name: companyFormData.name,
+            state: companyFormData.state,
+            district: companyFormData.district,
+            pincode: companyFormData.pincode,
+            labourer_daily_wage: Number(companyFormData.labourer_daily_wage) || 0,
+            labourer_extrawage_per_kg: Number(companyFormData.labourer_extrawage_per_kg) || 0,
+            labourer_extrawage_per_hr: Number(companyFormData.labourer_extrawage_per_hr) || 0,
+          };
+          const gPayload = {
+            name: gardenFormData.name,
+            state: gardenFormData.state,
+            district: gardenFormData.district,
+            pincode: gardenFormData.pincode,
+            companyid: flowCompanyId
+          };
+          await onCreateCompanyFlow(cPayload, gPayload);
+          return;
+        }
+      } else if (type === "company") {
         if (!onCreateCompany || !onUpdateCompany) return;
         const payload = {
           companyid: company ? company.companyid : "",
@@ -539,6 +605,36 @@ export const FormModal = ({
       </div>
     </div>
   );
+
+  const renderCompanyFlow = () => {
+    if (flowStep === "email") {
+      return (
+        <>
+          <label className="field-label">
+            Company Email
+            <input className="field-input" type="email" value={flowEmail} onChange={(e) => setFlowEmail(e.target.value)} required />
+          </label>
+        </>
+      );
+    }
+    if (flowStep === "otp") {
+      return (
+        <>
+          <label className="field-label">
+            Verification Code
+            <input className="field-input" type="text" value={flowOtp} onChange={(e) => setFlowOtp(e.target.value)} required />
+          </label>
+        </>
+      );
+    }
+    if (flowStep === "company") {
+      return renderCompanyForm();
+    }
+    if (flowStep === "garden") {
+      return renderGardenForm();
+    }
+    return null;
+  };
 
   const renderCompanyForm = () => (
     <>
@@ -825,15 +921,36 @@ export const FormModal = ({
     </>
   );
 
+  const getModalTitle = () => {
+    if (type === "company_flow") {
+      if (flowStep === "email") return "Verify Company Email";
+      if (flowStep === "otp") return "Enter Verification Code";
+      if (flowStep === "company") return "Company Details";
+      if (flowStep === "garden") return "Create First Garden";
+    }
+    return `${mode === "create" ? "Create" : "Update"} ${type}`;
+  };
+
+  const getSubmitLabel = () => {
+    if (type === "company_flow") {
+      if (flowStep === "email") return flowIsLoading ? "Sending..." : "Send Verification Code";
+      if (flowStep === "otp") return flowIsLoading ? "Verifying..." : "Verify Code";
+      if (flowStep === "company") return "Next";
+      if (flowStep === "garden") return isSubmitting ? "Saving..." : "Create Company & Garden";
+    }
+    return isSubmitting ? "Saving..." : "Save";
+  };
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-card">
         <div className="panel-header">
-          <h2 className="panel-title">{mode === "create" ? "Create" : "Update"} {type}</h2>
+          <h2 className="panel-title">{getModalTitle()}</h2>
           <button type="button" className="link-button" onClick={onClose}>Close</button>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">
-          {type === "company" ? renderCompanyForm() :
+          {type === "company_flow" ? renderCompanyFlow() :
+           type === "company" ? renderCompanyForm() :
            type === "garden" ? renderGardenForm() :
            type === "user" ? renderUserForm() :
            type === "labourer" ? renderLabourerForm() :
@@ -843,8 +960,8 @@ export const FormModal = ({
            renderTaskForm()}
 
           {error && <p className="field-error">{error}</p>}
-          <button className="primary-button" type="submit" disabled={isSubmitting || !canSubmit}>
-            {isSubmitting ? "Saving..." : "Save"}
+          <button className="primary-button" type="submit" disabled={isSubmitting || flowIsLoading || (type !== "company_flow" && !canSubmit)}>
+            {getSubmitLabel()}
           </button>
         </form>
       </div>

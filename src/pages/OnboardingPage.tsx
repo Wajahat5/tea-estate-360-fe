@@ -10,7 +10,9 @@ export const OnboardingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
-  const [mode, setMode] = useState<"choice" | "create_company_email" | "create_company_otp" | "create_company_details" | "create_garden" | "join_garden">("choice");
+  const [mode, setMode] = useState<"create_company_email" | "create_company_otp" | "create_company_details" | "create_garden" | "join_garden">(
+    user?.profession === 'owner' ? "create_company_email" : "join_garden"
+  );
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -113,7 +115,7 @@ export const OnboardingPage = () => {
         );
       }
 
-      navigate("/dashboard");
+      navigate("/companies");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -141,7 +143,7 @@ export const OnboardingPage = () => {
     setError(null);
     try {
       await apiService.user.joinGarden({ gardenid });
-      navigate("/dashboard");
+      navigate("/companies");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -152,29 +154,6 @@ export const OnboardingPage = () => {
   return (
     <div className="auth-columns" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f7fb" }}>
       <div className="auth-panel" style={{ maxWidth: "500px", width: "100%", background: "white", padding: "32px", borderRadius: "16px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
-
-        {mode === "choice" && (
-          <div>
-            <h2 className="auth-title" style={{ textAlign: "center", marginTop: 0 }}>Welcome, {user?.name}!</h2>
-            <p style={{ textAlign: "center", color: "#6b7280", marginBottom: "24px" }}>What would you like to do next?</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <button
-                className="primary-button"
-                style={{ padding: "16px", fontSize: "16px" }}
-                onClick={() => setMode("create_company_email")}
-              >
-                🏢 Create a New Company
-              </button>
-              <button
-                className="secondary-button"
-                style={{ padding: "16px", fontSize: "16px" }}
-                onClick={() => setMode("join_garden")}
-              >
-                🌱 Join an Existing Garden
-              </button>
-            </div>
-          </div>
-        )}
 
         {mode === "create_company_email" && (
           <div>
@@ -188,7 +167,6 @@ export const OnboardingPage = () => {
               <button className="primary-button" type="submit" disabled={loading}>
                 {loading ? "Sending..." : "Send Verification Code"}
               </button>
-              <button type="button" className="link-button" onClick={() => setMode("choice")}>Back</button>
             </form>
           </div>
         )}
@@ -321,8 +299,6 @@ export const OnboardingPage = () => {
                 ))}
               </div>
             )}
-
-            <button type="button" className="link-button" style={{ display: "block", marginTop: "16px", width: "100%", textAlign: "center" }} onClick={() => setMode("choice")}>Back</button>
           </div>
         )}
 

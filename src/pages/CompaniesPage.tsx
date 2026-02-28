@@ -26,7 +26,7 @@ export const CompaniesPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
-  const [modalType, setModalType] = useState<"company" | "garden">("company");
+  const [modalType, setModalType] = useState<"company" | "garden" | "company_flow">("company");
   const [selectedCompany, setSelectedCompany] = useState<
     CompanyListItem | undefined
   >(undefined);
@@ -120,6 +120,21 @@ export const CompaniesPage = () => {
     }
   };
 
+  const handleCreateCompanyFlow = async (companyPayload: CreateCompanyRequest, gardenPayload: CreateGardenRequest) => {
+    setIsSubmitting(true);
+    try {
+      await apiService.company.create(companyPayload);
+      await apiService.garden.create(gardenPayload);
+      await reloadCompanies();
+      setIsModalOpen(false);
+      setSuccessMessage("Company and Garden created successfully");
+    } catch (err) {
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleProcessRequest = async (action: "accept" | "reject", userid: string, gardenid: string, companyid: string) => {
     try {
       await apiService.company.processRequest({ action, userid, gardenid, companyid });
@@ -143,6 +158,12 @@ export const CompaniesPage = () => {
       gardenName: company.gardens.find(g => g.gardenid === req.gardenid)?.name || req.gardenid
     }))
   );
+
+  if (user?.profession !== 'owner' && companies.length === 0) {
+    // If not an owner and blocked, the DashboardLayout will render AccessBlockedModal.
+    // We can just return empty here to avoid showing "All companies" header underneath the modal.
+    return null;
+  }
 
   return (
     <div>
@@ -191,7 +212,7 @@ export const CompaniesPage = () => {
               className="primary-button"
               onClick={() => {
                 setModalMode("create");
-                setModalType("company");
+                setModalType("company_flow");
                 setSelectedCompany(undefined);
                 setIsModalOpen(true);
               }}
@@ -257,6 +278,7 @@ export const CompaniesPage = () => {
         onUpdateCompany={handleUpdateCompany}
         onCreateGarden={handleCreateGarden}
         onUpdateGarden={handleUpdateGarden}
+        onCreateCompanyFlow={handleCreateCompanyFlow}
       />
     </div>
   );

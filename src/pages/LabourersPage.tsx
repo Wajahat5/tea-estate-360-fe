@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useState, useMemo } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
 import type {
@@ -7,21 +7,25 @@ import type {
   UpdateLabourerRequest
 } from "../types/api";
 import { FormModal } from "../ui/FormModal";
+import { NoResults } from "../ui/NoResults";
 import { SuccessBanner } from "../ui/SuccessBanner";
 
 export const LabourersPage = () => {
   const companies = useAppSelector((state) => state.companies.items);
   const user = useAppSelector((state) => state.auth.user);
+  const [gardenid, setGardenid] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [labourers, setLabourers] = useState<Labourer[]>([]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
   const [selectedLabourer, setSelectedLabourer] = useState<Labourer | undefined>(
     undefined
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [gardenid, setGardenid] = useState("");
 
   const gardens = useMemo(() => {
     const ownedGardens = companies
@@ -41,25 +45,37 @@ export const LabourersPage = () => {
     return Array.from(unique.values());
   }, [companies, user?.userid]);
 
-  const loadLabourers = useCallback(async () => {
+  const loadLabourers = async (gid: string) => {
+    setLoading(true);
     try {
-      const data = await apiService.labourer.fetch(gardenid ? { gardenid } : {});
+      const data = await apiService.labourer.fetch({ gardenid: gid });
       setLabourers(data);
+      setHasSearched(true);
     } catch (fetchError) {
       setError((fetchError as Error).message || "Failed to fetch labourers");
+    } finally {
+      setLoading(false);
     }
-  }, [gardenid]);
+  };
 
-  useEffect(() => {
-    loadLabourers();
-  }, [loadLabourers]);
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    if (!gardenid) {
+      setError("Garden is required.");
+      return;
+    }
+    await loadLabourers(gardenid);
+  };
 
   const handleCreateLabourer = async (payload: CreateLabourerRequest) => {
     setIsSubmitting(true);
     setError(null);
     try {
       await apiService.labourer.create(payload);
-      await loadLabourers();
+      if (gardenid) {
+        await loadLabourers(gardenid);
+      }
       setIsModalOpen(false);
       setSuccessMessage("Labourer created successfully");
     } catch (createError) {
@@ -84,7 +100,9 @@ export const LabourersPage = () => {
       if (file) {
         await apiService.labourer.uploadImage(payload.labourerid, file);
       }
-      await loadLabourers();
+      if (gardenid) {
+        await loadLabourers(gardenid);
+      }
       setIsModalOpen(false);
       setSuccessMessage("Labourer updated successfully");
     } catch (updateError) {
@@ -106,38 +124,54 @@ export const LabourersPage = () => {
       <h1 className="page-title">Labourers</h1>
       <div className="panel">
         <div className="panel-header">
-          <h2 className="panel-title">All labourers</h2>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <h2 className="panel-title">Filter Labourers</h2>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => {
+              setModalMode("create");
+              setSelectedLabourer(undefined);
+              setIsModalOpen(true);
+            }}
+          >
+            Create Labourer
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="request-filters-form">
+          <label className="field-label">
+            Garden
             <select
               className="field-input"
               value={gardenid}
-              onChange={(e) => setGardenid(e.target.value)}
-              style={{ width: "200px" }}
+              onChange={(event) => setGardenid(event.target.value)}
+              required
             >
-              <option value="">All Gardens</option>
-              {gardens.map((g) => (
-                <option key={g.gardenid} value={g.gardenid}>
-                  {g.name}
+              <option value="">Select garden</option>
+              {gardens.map((garden) => (
+                <option key={garden.gardenid} value={garden.gardenid}>
+                  {garden.name}
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => {
-                setModalMode("create");
-                setSelectedLabourer(undefined);
-                setIsModalOpen(true);
-              }}
-              style={{ marginTop: 0 }}
-            >
-              Create Labourer
-            </button>
-          </div>
-        </div>
+          </label>
+          <button className="primary-button" type="submit" disabled={loading}>
+            {loading ? "Fetching..." : "Submit"}
+          </button>
+        </form>
         {error && <p className="field-error">{error}</p>}
-        <table className="table">
-          <thead>
+      </div>
+
+      {hasSearched && labourers.length === 0 && (
+        <NoResults message="No labourers found for the selected garden." />
+      )}
+
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel">
+          <div className="panel-header">
+            <h2 className="panel-title">Labourers</h2>
+          </div>
+          <table className="table">
+            <thead>
             <tr>
               <th>Image</th>
               <th>Name</th>
@@ -197,8 +231,9 @@ export const LabourersPage = () => {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+          </table>
+        </div>
+      )}
 
       <FormModal
         isOpen={isModalOpen}

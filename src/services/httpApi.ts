@@ -321,8 +321,11 @@ export const httpApi = {
     }
   },
   labourer: {
-    list: async () => {
-      const raw = await request<RawLabourer[]>("/labourer/fetch", { method: "GET" });
+    fetch: async (filter?: { gardenid?: string }) => {
+      const raw = await request<RawLabourer[]>("/labourer/fetch", {
+        method: "POST",
+        body: JSON.stringify(filter || {})
+      });
       return raw.map(
         (item): Labourer => ({
           labourerid: item.labourerid || item._id || "",
@@ -579,39 +582,11 @@ export const httpApi = {
     }
   },
   dashboard: {
-    overview: (query: DashboardQuery = {}) =>
-      request<DashboardOverviewResponse>(
-        `/dashboard/overview${buildQuery(query)}`,
+    summary: async () => {
+      return request<import("../types/api").DashboardSummaryResponse>(
+        "/dashboard/summary",
         { method: "GET" }
-      ),
-    trends: (
-      query: DashboardQuery & {
-        group_by?: "day" | "week" | "month";
-        metrics?: string;
-      } = {}
-    ) =>
-      request<DashboardTrendsResponse>(
-        `/dashboard/trends${buildQuery(query)}`,
-        { method: "GET" }
-      ),
-    recentActivity: (
-      query: DashboardQuery & {
-        limit?: number;
-      } = {}
-    ) =>
-      request<DashboardRecentActivityResponse>(
-        `/dashboard/recent-activity${buildQuery(query)}`,
-        { method: "GET" }
-      ),
-    alerts: (query: DashboardQuery = {}) =>
-      request<DashboardAlertsResponse>(
-        `/dashboard/alerts${buildQuery(query)}`,
-        { method: "GET" }
-      ),
-    gardenBreakdown: (query: DashboardQuery = {}) =>
-      request<DashboardGardenBreakdownResponse>(
-        `/dashboard/garden-breakdown${buildQuery(query)}`,
-        { method: "GET" }
-      )
+      );
+    }
   }
 };

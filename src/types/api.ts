@@ -379,3 +379,16 @@ export interface DashboardGardenBreakdownResponse {
     tasks_under_progress: number;
   }>;
 }
+
+export interface DashboardSummaryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    totalLabourers: number;
+    totalEmployees: number;
+    totalReviewRequests: number;
+    totalUnpaidExpenses: number;
+    totalNotStartedTasks: number;
+    totalInProgressTasks: number;
+  };
+}

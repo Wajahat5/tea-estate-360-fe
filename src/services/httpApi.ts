@@ -221,8 +221,42 @@ export const httpApi = {
         token
       } as LoginResponse;
     },
-    create: (body: CreateUserRequest) =>
-      request<User>("/user/create", {
+    create: async (body: CreateUserRequest) => {
+      const raw = await request<
+        | { user?: RawUser; token?: string }
+        | { data?: { user?: RawUser; token?: string } }
+        | (RawUser & { token?: string })
+      >("/user/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+
+      const token =
+        (raw as any).token ??
+        (raw as any).data?.token ??
+        (raw as any).accessToken;
+      if (!token) {
+        throw new Error("Create user response did not include an auth token");
+      }
+      const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
+      const user: User = {
+        userid: rawUser._id,
+        db_role: rawUser.db_role,
+        gardenid: rawUser.gardenid,
+        name: rawUser.name,
+        phone: rawUser.phone,
+        profession: rawUser.profession,
+        email: rawUser.email,
+        image: rawUser.image
+      };
+
+      return {
+        user,
+        token
+      } as LoginResponse;
+    },
+    joinGarden: (body: { gardenid: string }) =>
+      request<void>("/user/join-garden", {
         method: "POST",
         body: JSON.stringify(body)
       }),
@@ -251,6 +285,25 @@ export const httpApi = {
       })
   },
   company: {
+    sendCode: (body: import("../types/api").SendCodeRequest) =>
+      request<{ success: boolean; companyid: string }>("/company/send-code", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    verifyCode: (body: import("../types/api").VerifyCodeRequest) =>
+      request<{ success: boolean; message: string; companyid: string }>("/company/verify-code", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    searchByName: (name: string) =>
+      request<import("../types/api").SearchCompanyResponse[]>(`/company/${encodeURIComponent(name)}`, {
+        method: "GET"
+      }),
+    processRequest: (body: import("../types/api").ProcessJoinRequest) =>
+      request<void>("/company/process-request", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
     create: (body: CreateCompanyRequest) =>
       request<RawCompanyListItem>("/company/create", {
         method: "POST",

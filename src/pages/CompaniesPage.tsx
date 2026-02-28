@@ -19,6 +19,7 @@ import { SuccessBanner } from "../ui/SuccessBanner";
 
 export const CompaniesPage = () => {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   const { items: companies, loading, error } = useAppSelector(
     (state) => state.companies
   );
@@ -119,9 +120,29 @@ export const CompaniesPage = () => {
     }
   };
 
+  const handleProcessRequest = async (action: "accept" | "reject", userid: string, gardenid: string, companyid: string) => {
+    try {
+      await apiService.company.processRequest({ action, userid, gardenid, companyid });
+      await reloadCompanies();
+      setSuccessMessage(`Request ${action}ed successfully.`);
+    } catch (err) {
+      // Error handled globally
+    }
+  };
+
   if (loading && companies.length === 0) {
     return <p>Loading companies...</p>;
   }
+
+  // Aggregate access requests across all owned companies
+  const accessRequests = companies.flatMap(company =>
+    (company.access_requests || []).map(req => ({
+      ...req,
+      companyid: company.companyid,
+      companyName: company.name,
+      gardenName: company.gardens.find(g => g.gardenid === req.gardenid)?.name || req.gardenid
+    }))
+  );
 
   return (
     <div>
@@ -134,21 +155,50 @@ export const CompaniesPage = () => {
 
       <h1 className="page-title">Companies</h1>
 
+      {accessRequests.length > 0 && (
+        <div className="panel" style={{ marginBottom: "24px" }}>
+          <div className="panel-header">
+            <h2 className="panel-title">Join Requests</h2>
+          </div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Request Details</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accessRequests.map((req, idx) => (
+                <tr key={`${req.userid}-${req.gardenid}-${idx}`}>
+                  <td>User {req.userid} wants to join {req.gardenName} of {req.companyName}</td>
+                  <td>
+                    <button className="primary-button sm-button" onClick={() => handleProcessRequest("accept", req.userid, req.gardenid, req.companyid)} style={{ marginRight: "8px", marginTop: 0 }}>Accept</button>
+                    <button className="secondary-button sm-button" onClick={() => handleProcessRequest("reject", req.userid, req.gardenid, req.companyid)} style={{ marginTop: 0 }}>Reject</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="panel">
         <div className="panel-header">
           <h2 className="panel-title">All companies</h2>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              setModalMode("create");
-              setModalType("company");
-              setSelectedCompany(undefined);
-              setIsModalOpen(true);
-            }}
-          >
-            Create Company
-          </button>
+          {user?.profession === 'owner' && (
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                setModalMode("create");
+                setModalType("company");
+                setSelectedCompany(undefined);
+                setIsModalOpen(true);
+              }}
+            >
+              Create Company
+            </button>
+          )}
         </div>
 
         {companies.length === 0 ? (

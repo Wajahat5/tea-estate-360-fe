@@ -187,18 +187,26 @@ export const mockApi = {
       };
     },
 
-    async create(payload: CreateUserRequest): Promise<User> {
+    async create(payload: CreateUserRequest): Promise<{ user: User; token: string }> {
       await delay(400);
       const newUser: User & { password: string } = {
         userid: crypto.randomUUID(),
-        gardenid: payload.gardenid,
+        gardenid: "", // Defaults to empty during initial signup
         name: payload.name,
         phone: payload.phone,
         profession: payload.profession,
         password: payload.password
       };
       users.push(newUser);
-      return { ...newUser, password: undefined } as unknown as User;
+      return {
+        user: { ...newUser, password: undefined } as unknown as User,
+        token: `mock-token-${newUser.userid}`
+      };
+    },
+
+    async joinGarden(payload: { gardenid: string }): Promise<void> {
+      await delay(200);
+      // In a real app this creates a request. In mock, we just say okay.
     },
 
     async fetch(): Promise<User> {
@@ -214,7 +222,6 @@ export const mockApi = {
       }
       users[index] = {
         ...users[index],
-        gardenid: payload.gardenid,
         ...(payload.name ? { name: payload.name } : {}),
         ...(payload.phone ? { phone: payload.phone } : {}),
         ...(payload.profession ? { profession: payload.profession } : {}),
@@ -244,11 +251,48 @@ export const mockApi = {
   },
 
   company: {
+    async sendCode(payload: import("../types/api").SendCodeRequest): Promise<{ success: boolean; companyid: string }> {
+      await delay(300);
+      return { success: true, companyid: "mock-company-id-for-code" };
+    },
+    async verifyCode(payload: import("../types/api").VerifyCodeRequest): Promise<{ success: boolean; message: string; companyid: string }> {
+      await delay(300);
+      if (payload.code === "123456" || payload.code === "0000") { // 0000 for ease of testing
+        return { success: true, message: "Valid Code", companyid: "mock-company-id" };
+      }
+      throw new Error("Invalid Code");
+    },
+    async searchByName(name: string): Promise<import("../types/api").SearchCompanyResponse[]> {
+      await delay(300);
+      const lowerName = name.toLowerCase();
+      const match = companies.filter(c => c.name.toLowerCase().includes(lowerName));
+      return match.map(c => ({
+        companyid: c.companyid,
+        name: c.name,
+        image: "",
+        address: { state: c.state, district: c.district, pincode: c.pincode },
+        gardens: gardens.filter(g => g.companyid === c.companyid).map(g => ({
+          gardenid: g.gardenid,
+          image: "",
+          name: g.name,
+          address: { state: g.state, district: g.district, pincode: g.pincode }
+        }))
+      }));
+    },
+    async processRequest(payload: import("../types/api").ProcessJoinRequest): Promise<void> {
+      await delay(200);
+      const company = companies.find(c => c.companyid === payload.companyid);
+      if (company && company.access_requests) {
+         company.access_requests = company.access_requests.filter(
+             r => !(r.userid === payload.userid && r.gardenid === payload.gardenid)
+         );
+      }
+    },
     async create(payload: CreateCompanyRequest): Promise<Company> {
       await delay(300);
       const newCompany: Company = {
         ...payload,
-        companyid: crypto.randomUUID()
+        companyid: payload.companyid || crypto.randomUUID()
       };
       companies.push(newCompany);
       return newCompany;
@@ -280,19 +324,31 @@ export const mockApi = {
     },
     async list(): Promise<CompanyListItem[]> {
       await delay(200);
-      return companies.map((company) => ({
-        ...company,
-        gardens: gardens
-          .filter((garden) => garden.companyid === company.companyid)
-          .map((garden) => ({
-            gardenid: garden.gardenid,
-            name: garden.name,
-            state: garden.state,
-            district: garden.district,
-            pincode: garden.pincode,
-            companyid: garden.companyid
-          }))
-      }));
+      return companies.map((company) => {
+        // Mock some access requests for testing UI
+        const access_requests = company.access_requests || [];
+        if (company.companyid === "6011c7b575326918c46a817f" && access_requests.length === 0) {
+            access_requests.push({
+                _id: "req1",
+                userid: "user-wanting-to-join",
+                gardenid: "6011c359104f274b806aefa3"
+            });
+        }
+        return {
+          ...company,
+          access_requests,
+          gardens: gardens
+            .filter((garden) => garden.companyid === company.companyid)
+            .map((garden) => ({
+              gardenid: garden.gardenid,
+              name: garden.name,
+              state: garden.state,
+              district: garden.district,
+              pincode: garden.pincode,
+              companyid: garden.companyid
+            }))
+        }
+      });
     }
   },
 

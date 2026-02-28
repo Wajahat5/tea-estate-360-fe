@@ -125,7 +125,6 @@ type UserFormState = {
   phone: string;
   profession: string;
   email: string;
-  gardenid: string;
 };
 
 const createInitialLabourerState: LabourerFormState = {
@@ -191,8 +190,7 @@ const createInitialUserState: UserFormState = {
   name: "",
   phone: "",
   profession: "",
-  email: "",
-  gardenid: ""
+  email: ""
 };
 
 export const FormModal = ({
@@ -321,8 +319,7 @@ export const FormModal = ({
         name: user.name || "",
         phone: user.phone || "",
         profession: user.profession || "",
-        email: user.email || "",
-        gardenid: user.gardenid || ""
+        email: user.email || ""
       });
     }
   }, [isOpen, mode, type, labourer, employee, request, expense, task, company, gardenData, user]);
@@ -435,7 +432,6 @@ export const FormModal = ({
         if (!onUpdateUser || !user) return;
         const payload: UpdateUserRequest = {
           userid: user.userid,
-          gardenid: userFormData.gardenid,
           name: userFormData.name.trim(),
           phone: userFormData.phone.trim(),
           profession: userFormData.profession.trim(),
@@ -600,18 +596,6 @@ export const FormModal = ({
       <label className="field-label">
         Email
         <input className="field-input" name="email" value={userFormData.email} onChange={handleUserChange} />
-      </label>
-      {/* Assuming gardenid might be needed if the user can change their garden, or just for the API payload requirement */}
-      <label className="field-label">
-        Garden
-        <select className="field-input" name="gardenid" value={userFormData.gardenid} onChange={handleUserChange} required>
-            <option value="">Select garden</option>
-            {gardens.map((g) => (
-              <option key={g.gardenid} value={g.gardenid}>
-                {g.name}
-              </option>
-            ))}
-        </select>
       </label>
       {mode === "update" && renderImageUpload(user?.image)}
     </>

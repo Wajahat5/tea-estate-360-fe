@@ -56,7 +56,6 @@ export interface User {
 }
 
 export interface CreateUserRequest {
-  gardenid: string;
   name: string;
   phone: string;
   profession: string;
@@ -70,11 +69,41 @@ export interface LoginUserRequest {
 
 export interface UpdateUserRequest {
   userid: string;
-  gardenid: string;
   name?: string;
   phone?: string;
   profession?: string;
   email?: string;
+}
+
+export interface SendCodeRequest {
+  email: string;
+  type?: string;
+}
+
+export interface VerifyCodeRequest {
+  email: string;
+  code: string;
+}
+
+export interface SearchCompanyResponse {
+  companyid: string;
+  name: string;
+  image: string;
+  address: {
+    state: string;
+    district: string;
+    pincode: string;
+  };
+  gardens: Array<{
+    gardenid: string;
+    image: string;
+    name: string;
+    address?: {
+      state: string;
+      district: string;
+      pincode: string;
+    };
+  }>;
 }
 
 export interface Garden {

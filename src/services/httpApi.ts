@@ -317,7 +317,7 @@ export const httpApi = {
       }),
     processRequest: (body: import("../types/api").ProcessJoinRequest) =>
       request<void>("/company/process-request", {
-        method: "POST",
+        method: "PATCH",
         body: JSON.stringify(body)
       }),
     getGovtData: () =>

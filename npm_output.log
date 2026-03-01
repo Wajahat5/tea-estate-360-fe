@@ -1,0 +1,11 @@
+
+> tea-estate-360-fe@0.0.1 dev
+> vite
+
+
+  VITE v5.4.21  ready in 318 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+5:13:32 PM [vite] hmr update /src/pages/LabourersPage.tsx
+5:13:42 PM [vite] hmr update /src/pages/LabourersPage.tsx

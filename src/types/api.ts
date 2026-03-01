@@ -159,28 +159,24 @@ export interface LabourerLeaveRequest {
 }
 
 export interface FetchAttendanceRequest {
-  gardenid: string;
+  labourerids: string[];
   date: string;
 }
 
 export interface AddAttendanceRequest {
-  gardenid: string;
-  data: Array<{
+  labourers: Array<{
     labourerid: string;
-    status: string;
-    extra: number;
-    type: string;
+    extra?: number;
+    type?: string;
   }>;
   date: string;
 }
 
 export interface UpdateAttendanceRequest {
-  gardenid: string;
-  data: Array<{
+  labourers: Array<{
     labourerid: string;
-    status: string;
-    extra: number;
-    type: string;
+    extra?: number;
+    type?: string;
   }>;
   date: string;
 }
@@ -188,7 +184,7 @@ export interface UpdateAttendanceRequest {
 export interface BatchFetchRequest {
   companyid: string;
   labourerids: string[];
-  year: number;
+  year: number | string;
   month: string;
   part: string;
 }

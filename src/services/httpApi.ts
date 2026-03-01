@@ -438,6 +438,15 @@ export const httpApi = {
       request<void>("/labourer/remove-image", {
         method: "DELETE",
         body: JSON.stringify({ labourerid })
+      }),
+    addLeave: (body: import("../types/api").LabourerLeaveRequest) =>
+      request<void>("/labourer/add-leave", {
+        method: "PUT",
+        body: JSON.stringify(body)
+      }),
+    fetchAvailableLeaves: (labourerid: string, date: string) =>
+      request<{ leaves: number }>(`/labourer/${encodeURIComponent(labourerid)}/${encodeURIComponent(date)}`, {
+        method: "GET"
       })
   },
   employee: {

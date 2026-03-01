@@ -489,6 +489,38 @@ export const httpApi = {
         body: JSON.stringify({ employeeid })
       })
   },
+  earnings: {
+    fetchAttendance: (body: import("../types/api").FetchAttendanceRequest) =>
+      request<any>("/earning/fetch-attendance", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addAttendance: (body: import("../types/api").AddAttendanceRequest) =>
+      request<void>("/earning/add-attendance", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    updateAttendance: (body: import("../types/api").UpdateAttendanceRequest) =>
+      request<void>("/earning/update-attendance", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    batchFetch: (body: import("../types/api").BatchFetchRequest) =>
+      request<any>("/earning/batchFetch", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addPayment: (body: import("../types/api").AddPaymentRequest) =>
+      request<void>("/earning/add-payment", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    deletePayment: (body: import("../types/api").DeletePaymentRequest) =>
+      request<void>("/earning/delete-payment", {
+        method: "DELETE",
+        body: JSON.stringify(body)
+      })
+  },
   requests: {
     create: (body: MaintenanceRequest) =>
       request<MaintenanceRequest>("/requests/create", {

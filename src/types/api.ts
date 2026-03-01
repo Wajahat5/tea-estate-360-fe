@@ -158,37 +158,57 @@ export interface LabourerLeaveRequest {
   reason: string;
 }
 
+export interface FetchAttendanceRequest {
+  gardenid: string;
+  date: string;
+}
+
 export interface AddAttendanceRequest {
-  labourerid: string;
-  year: string;
-  month: number;
-  part: number;
-  extra: number;
-  day: number;
-  type: string;
+  gardenid: string;
+  data: Array<{
+    labourerid: string;
+    status: string;
+    extra: number;
+    type: string;
+  }>;
+  date: string;
 }
 
 export interface UpdateAttendanceRequest {
-  earningid: string;
-  day: number;
-  extra: number;
-  type: string;
+  gardenid: string;
+  data: Array<{
+    labourerid: string;
+    status: string;
+    extra: number;
+    type: string;
+  }>;
+  date: string;
+}
+
+export interface BatchFetchRequest {
+  companyid: string;
+  labourerids: string[];
+  year: number;
+  month: string;
+  part: string;
+}
+
+export interface BatchFetchResponse {
+  labourerid: string;
+  attendance: any[];
+  total_earned: number;
 }
 
 export interface AddPaymentRequest {
-  labourerid: string;
-  year: number;
-  month: number;
-  part: number;
+  labourerids: string[];
+  ymp: string;
   amount: number;
 }
 
 export interface DeletePaymentRequest {
   companyid: string;
-  labourerid: string;
-  year: string;
-  month: number;
-  part: number;
+  labourerids: string[];
+  ymp: string;
 }
 
 export type RequestStatus = "under_review" | "approved";

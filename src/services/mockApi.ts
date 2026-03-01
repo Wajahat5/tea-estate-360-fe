@@ -457,16 +457,29 @@ export const mockApi = {
   },
 
   earnings: {
-    async addAttendance(_payload: AddAttendanceRequest): Promise<void> {
+    async fetchAttendance(payload: import("../types/api").FetchAttendanceRequest): Promise<any> {
+      await delay(200);
+      return { data: [] };
+    },
+    async addAttendance(_payload: import("../types/api").AddAttendanceRequest): Promise<void> {
       await delay(200);
     },
-    async updateAttendance(_payload: UpdateAttendanceRequest): Promise<void> {
+    async updateAttendance(_payload: import("../types/api").UpdateAttendanceRequest): Promise<void> {
       await delay(200);
     },
-    async addPayment(_payload: AddPaymentRequest): Promise<void> {
+    async batchFetch(payload: import("../types/api").BatchFetchRequest): Promise<any> {
+      await delay(200);
+      return { data: payload.labourers?.map((id) => ({
+        labourerid: id,
+        attendance: [],
+        total_earned: Math.floor(Math.random() * 5000),
+        status: "unpaid"
+      })) || [] };
+    },
+    async addPayment(_payload: import("../types/api").AddPaymentRequest): Promise<void> {
       await delay(200);
     },
-    async deletePayment(_payload: DeletePaymentRequest): Promise<void> {
+    async deletePayment(_payload: import("../types/api").DeletePaymentRequest): Promise<void> {
       await delay(200);
     }
   },

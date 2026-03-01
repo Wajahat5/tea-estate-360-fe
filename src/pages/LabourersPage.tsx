@@ -37,7 +37,13 @@ export const LabourersPage = () => {
   const [payrollMonth, setPayrollMonth] = useState<string>((new Date().getMonth() + 1).toString().padStart(2, "0"));
   const [payrollPart, setPayrollPart] = useState<"1" | "2">("1");
   const [payrollData, setPayrollData] = useState<Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }>>({});
-  const [payrollTotal, setPayrollTotal] = useState(0);
+
+  const totalAmountToPay = useMemo(() => {
+    return labourers.reduce((total, l) => {
+      const earned = payrollData[l.labourerid]?.total_earned || 0;
+      return total + earned;
+    }, 0);
+  }, [labourers, payrollData]);
 
   // Leaves State
   const [leavesDate, setLeavesDate] = useState("");
@@ -643,7 +649,7 @@ return (
                     </td>
                     <td>{l.name}</td>
                     <td>
-                      <span className="status-badge" style={{ backgroundColor: attendancePresence[l.labourerid] === "present" ? '#10b981' : attendancePresence[l.labourerid] === "absent" ? '#ef4444' : '#e5e7eb', color: attendancePresence[l.labourerid] === "-" || !attendancePresence[l.labourerid] ? '#374151' : 'white' }}>
+                      <span style={{ color: "black", fontWeight: 500 }}>
                         {attendancePresence[l.labourerid] || "-"}
                       </span>
                     </td>
@@ -813,14 +819,19 @@ return (
       {labourers.length > 0 && activeTab === "payrole" && (
         <div className="panel request-group-panel">
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
-            <input
-              type="text"
-              className="field-input"
-              placeholder="Search by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ maxWidth: '300px', margin: 0 }}
-            />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input
+                type="text"
+                className="field-input"
+                placeholder="Search by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ maxWidth: '300px', margin: 0 }}
+              />
+              <div style={{ fontWeight: "bold", marginLeft: "10px", color: "#374151" }}>
+                Total amount to pay: ₹{totalAmountToPay}
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <select className="field-input" value={payrollYear} onChange={e => setPayrollYear(e.target.value)} style={{ margin: 0 }}>
                 {Array.from({length: 5}, (_, i) => new Date().getFullYear() - i).map(year => (

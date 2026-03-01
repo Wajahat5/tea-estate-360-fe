@@ -1,10 +1,13 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiService } from "../services/apiService";
+import { auth } from "../services/auth";
+import { useAppDispatch } from "../store/hooks";
+import { setAuth } from "../store/authSlice";
 
 export const SignupPage = () => {
   const navigate = useNavigate();
-  const [gardenId, setGardenId] = useState("");
+  const dispatch = useAppDispatch();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+91");
   const [profession, setProfession] = useState("owner");
@@ -17,14 +20,26 @@ export const SignupPage = () => {
     setError(null);
     setLoading(true);
     try {
-      await apiService.user.create({
-        gardenid: gardenId,
+      const response = await apiService.user.create({
         name,
         phone,
         profession,
         password
       });
-      navigate("/dashboard");
+
+      // Auto-login after signup
+      if (response.token) {
+        auth.setToken(response.token);
+      }
+      auth.setUser(response.user);
+      dispatch(
+        setAuth({
+          token: response.token,
+          user: response.user
+        })
+      );
+
+      navigate("/onboarding");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -37,17 +52,6 @@ export const SignupPage = () => {
       <div className="auth-panel">
         <h2 className="auth-title">Sign Up</h2>
         <form onSubmit={handleSubmit} className="auth-form">
-          <label className="field-label">
-            Garden ID
-            <input
-              className="field-input"
-              type="text"
-              value={gardenId}
-              onChange={(e) => setGardenId(e.target.value)}
-              placeholder="Garden identifier"
-              required
-            />
-          </label>
           <label className="field-label">
             Name
             <input

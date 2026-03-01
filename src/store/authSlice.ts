@@ -5,17 +5,22 @@ import { auth } from "../services/auth";
 type AuthState = {
   token: string | null;
   user: User | null;
+  isBlocked: boolean;
 };
 
 const initialState: AuthState = {
   token: auth.getToken(),
-  user: null
+  user: null,
+  isBlocked: false
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    setBlocked(state, action: PayloadAction<boolean>) {
+      state.isBlocked = action.payload;
+    },
     setAuth(state, action: PayloadAction<{ token: string; user: User }>) {
       state.token = action.payload.token;
       state.user = action.payload.user;
@@ -23,6 +28,7 @@ const authSlice = createSlice({
     clearAuth(state) {
       state.token = null;
       state.user = null;
+      state.isBlocked = false;
     },
     setUser(state, action: PayloadAction<User | null>) {
       state.user = action.payload;
@@ -30,5 +36,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { setAuth, clearAuth, setUser } = authSlice.actions;
+export const { setAuth, clearAuth, setUser, setBlocked } = authSlice.actions;
 export const authReducer = authSlice.reducer;

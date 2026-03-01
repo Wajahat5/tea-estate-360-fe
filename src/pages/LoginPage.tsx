@@ -46,7 +46,7 @@ export const LoginPage = () => {
           )
         );
       }
-      navigate("/dashboard");
+      navigate("/companies");
     } catch (err) {
       setError((err as Error).message);
     } finally {

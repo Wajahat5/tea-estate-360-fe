@@ -1,6 +1,7 @@
 import { config } from "../config";
 import { auth } from "./auth";
 import { store } from "../store";
+import { setBlocked } from "../store/authSlice";
 import type {
   CompanyListItem,
   CreateCompanyRequest,
@@ -164,23 +165,38 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
     if (!response.ok) {
       const text = await response.text();
-      // Try to parse JSON error message if possible
       let errorMessage = text || response.statusText;
+      let isBlockedError = false;
       try {
         const jsonError = JSON.parse(text);
         if (jsonError.message) {
           errorMessage = jsonError.message;
         }
+        if (response.status === 400 && jsonError.message === 'Not allowed to use db') {
+            isBlockedError = true;
+        }
       } catch {
         // ignore
       }
+
+      if (isBlockedError) {
+        store.dispatch(setBlocked(true));
+        // We can throw a specific error or generic one, but we don't want to show the error banner.
+        const err = new Error(errorMessage);
+        (err as any).isBlockedError = true;
+        throw err;
+      }
+
       throw new Error(errorMessage);
     }
 
     return (await response.json()) as T;
   } catch (error) {
-    const message = (error as Error).message || "An unexpected error occurred";
-    store.dispatch(setError(message));
+    const err = error as Error & { isBlockedError?: boolean };
+    if (!err.isBlockedError) {
+      const message = err.message || "An unexpected error occurred";
+      store.dispatch(setError(message));
+    }
     throw error;
   }
 }
@@ -221,8 +237,42 @@ export const httpApi = {
         token
       } as LoginResponse;
     },
-    create: (body: CreateUserRequest) =>
-      request<User>("/user/create", {
+    create: async (body: CreateUserRequest) => {
+      const raw = await request<
+        | { user?: RawUser; token?: string }
+        | { data?: { user?: RawUser; token?: string } }
+        | (RawUser & { token?: string })
+      >("/user/create", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+
+      const token =
+        (raw as any).token ??
+        (raw as any).data?.token ??
+        (raw as any).accessToken;
+      if (!token) {
+        throw new Error("Create user response did not include an auth token");
+      }
+      const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
+      const user: User = {
+        userid: rawUser._id,
+        db_role: rawUser.db_role,
+        gardenid: rawUser.gardenid,
+        name: rawUser.name,
+        phone: rawUser.phone,
+        profession: rawUser.profession,
+        email: rawUser.email,
+        image: rawUser.image
+      };
+
+      return {
+        user,
+        token
+      } as LoginResponse;
+    },
+    joinGarden: (body: { gardenid: string }) =>
+      request<void>("/user/join-garden", {
         method: "POST",
         body: JSON.stringify(body)
       }),
@@ -251,6 +301,29 @@ export const httpApi = {
       })
   },
   company: {
+    sendCode: (body: import("../types/api").SendCodeRequest) =>
+      request<{ success: boolean; companyid: string }>("/company/send-code", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    verifyCode: (body: import("../types/api").VerifyCodeRequest) =>
+      request<{ success: boolean; message: string; companyid: string }>("/company/verify-code", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    searchByName: (name: string) =>
+      request<import("../types/api").SearchCompanyResponse[]>(`/company/${encodeURIComponent(name)}`, {
+        method: "GET"
+      }),
+    processRequest: (body: import("../types/api").ProcessJoinRequest) =>
+      request<void>("/company/process-request", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    getGovtData: () =>
+      request<{ labourer_daily_wage: number; labourer_extrawage_kg: number; labourer_extrawage_hr: number }>("/company/govt-data", {
+        method: "GET"
+      }),
     create: (body: CreateCompanyRequest) =>
       request<RawCompanyListItem>("/company/create", {
         method: "POST",
@@ -321,8 +394,11 @@ export const httpApi = {
     }
   },
   labourer: {
-    list: async () => {
-      const raw = await request<RawLabourer[]>("/labourer/fetch", { method: "GET" });
+    fetch: async (filter?: { gardenid?: string }) => {
+      const raw = await request<RawLabourer[]>("/labourer/fetch", {
+        method: "POST",
+        body: JSON.stringify(filter || {})
+      });
       return raw.map(
         (item): Labourer => ({
           labourerid: item.labourerid || item._id || "",
@@ -411,6 +487,38 @@ export const httpApi = {
       request<void>("/employee/remove-image", {
         method: "DELETE",
         body: JSON.stringify({ employeeid })
+      })
+  },
+  earnings: {
+    fetchAttendance: (body: import("../types/api").FetchAttendanceRequest) =>
+      request<any>("/earning/fetch-attendance", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addAttendance: (body: import("../types/api").AddAttendanceRequest) =>
+      request<void>("/earning/add-attendance", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    updateAttendance: (body: import("../types/api").UpdateAttendanceRequest) =>
+      request<void>("/earning/update-attendance", {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    batchFetch: (body: import("../types/api").BatchFetchRequest) =>
+      request<any>("/earning/batchFetch", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addPayment: (body: import("../types/api").AddPaymentRequest) =>
+      request<void>("/earning/add-payment", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    deletePayment: (body: import("../types/api").DeletePaymentRequest) =>
+      request<void>("/earning/delete-payment", {
+        method: "DELETE",
+        body: JSON.stringify(body)
       })
   },
   requests: {
@@ -579,39 +687,11 @@ export const httpApi = {
     }
   },
   dashboard: {
-    overview: (query: DashboardQuery = {}) =>
-      request<DashboardOverviewResponse>(
-        `/dashboard/overview${buildQuery(query)}`,
+    summary: async () => {
+      return request<import("../types/api").DashboardSummaryResponse>(
+        "/dashboard/summary",
         { method: "GET" }
-      ),
-    trends: (
-      query: DashboardQuery & {
-        group_by?: "day" | "week" | "month";
-        metrics?: string;
-      } = {}
-    ) =>
-      request<DashboardTrendsResponse>(
-        `/dashboard/trends${buildQuery(query)}`,
-        { method: "GET" }
-      ),
-    recentActivity: (
-      query: DashboardQuery & {
-        limit?: number;
-      } = {}
-    ) =>
-      request<DashboardRecentActivityResponse>(
-        `/dashboard/recent-activity${buildQuery(query)}`,
-        { method: "GET" }
-      ),
-    alerts: (query: DashboardQuery = {}) =>
-      request<DashboardAlertsResponse>(
-        `/dashboard/alerts${buildQuery(query)}`,
-        { method: "GET" }
-      ),
-    gardenBreakdown: (query: DashboardQuery = {}) =>
-      request<DashboardGardenBreakdownResponse>(
-        `/dashboard/garden-breakdown${buildQuery(query)}`,
-        { method: "GET" }
-      )
+      );
+    }
   }
 };

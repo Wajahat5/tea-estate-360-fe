@@ -17,6 +17,7 @@ export const TasksPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -194,21 +195,30 @@ export const TasksPage = () => {
 
       {tasks.length > 0 && (
         <div className="panel request-group-panel">
-          <div className="panel-header">
+          <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Tasks</h2>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Date</th>
-                <th>Points</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks.map((task) => (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Points</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase())).map((task) => (
                 <tr key={task.taskid}>
                   <td>{task.title}</td>
                   <td>{task.date}</td>
@@ -255,9 +265,10 @@ export const TasksPage = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

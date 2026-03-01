@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { ErrorBanner } from "../ui/ErrorBanner";
 import { FormModal } from "../ui/FormModal";
 import { TeaEstateLogo } from "../ui/TeaEstateLogo";
+import { AccessBlockedModal } from "../ui/AccessBlockedModal";
 import type { UpdateUserRequest } from "../types/api";
 
 const navItems = [
@@ -29,6 +30,7 @@ export const DashboardLayout = () => {
   const error = useAppSelector((state) => state.error.message);
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
@@ -150,10 +152,17 @@ export const DashboardLayout = () => {
 
   return (
     <div className="dashboard-layout">
+      <AccessBlockedModal />
       {error && (
         <ErrorBanner message={error} onClose={() => dispatch(clearError())} />
       )}
-      <aside className="sidebar">
+      {isMobileSidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      <aside className={`sidebar ${isMobileSidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-header">
           <TeaEstateLogo />
         </div>
@@ -167,6 +176,7 @@ export const DashboardLayout = () => {
                   " "
                 )
               }
+              onClick={() => setIsMobileSidebarOpen(false)}
             >
               {item.label}
             </NavLink>
@@ -175,7 +185,14 @@ export const DashboardLayout = () => {
       </aside>
       <div className="main-content">
         <header className="topbar">
-          <div />
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
           <div className="topbar-user-wrapper">
             <button
               type="button"

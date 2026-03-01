@@ -56,7 +56,6 @@ export interface User {
 }
 
 export interface CreateUserRequest {
-  gardenid: string;
   name: string;
   phone: string;
   profession: string;
@@ -70,11 +69,41 @@ export interface LoginUserRequest {
 
 export interface UpdateUserRequest {
   userid: string;
-  gardenid: string;
   name?: string;
   phone?: string;
   profession?: string;
   email?: string;
+}
+
+export interface SendCodeRequest {
+  email: string;
+  type?: string;
+}
+
+export interface VerifyCodeRequest {
+  email: string;
+  code: string;
+}
+
+export interface SearchCompanyResponse {
+  companyid: string;
+  name: string;
+  image: string;
+  address: {
+    state: string;
+    district: string;
+    pincode: string;
+  };
+  gardens: Array<{
+    gardenid: string;
+    image: string;
+    name: string;
+    address?: {
+      state: string;
+      district: string;
+      pincode: string;
+    };
+  }>;
 }
 
 export interface Garden {
@@ -129,37 +158,57 @@ export interface LabourerLeaveRequest {
   reason: string;
 }
 
+export interface FetchAttendanceRequest {
+  gardenid: string;
+  date: string;
+}
+
 export interface AddAttendanceRequest {
-  labourerid: string;
-  year: string;
-  month: number;
-  part: number;
-  extra: number;
-  day: number;
-  type: string;
+  gardenid: string;
+  data: Array<{
+    labourerid: string;
+    status: string;
+    extra: number;
+    type: string;
+  }>;
+  date: string;
 }
 
 export interface UpdateAttendanceRequest {
-  earningid: string;
-  day: number;
-  extra: number;
-  type: string;
+  gardenid: string;
+  data: Array<{
+    labourerid: string;
+    status: string;
+    extra: number;
+    type: string;
+  }>;
+  date: string;
+}
+
+export interface BatchFetchRequest {
+  companyid: string;
+  labourerids: string[];
+  year: number;
+  month: string;
+  part: string;
+}
+
+export interface BatchFetchResponse {
+  labourerid: string;
+  attendance: any[];
+  total_earned: number;
 }
 
 export interface AddPaymentRequest {
-  labourerid: string;
-  year: number;
-  month: number;
-  part: number;
+  labourerids: string[];
+  ymp: string;
   amount: number;
 }
 
 export interface DeletePaymentRequest {
   companyid: string;
-  labourerid: string;
-  year: string;
-  month: number;
-  part: number;
+  labourerids: string[];
+  ymp: string;
 }
 
 export type RequestStatus = "under_review" | "approved";
@@ -214,6 +263,7 @@ export interface Expense {
   title: string;
   req_id: string | null;
   points: string[];
+  amount?: number;
   status: ExpenseStatus;
   image?: string;
 }
@@ -377,4 +427,17 @@ export interface DashboardGardenBreakdownResponse {
     tasks_not_started: number;
     tasks_under_progress: number;
   }>;
+}
+
+export interface DashboardSummaryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    totalLabourers: number;
+    totalEmployees: number;
+    totalReviewRequests: number;
+    totalUnpaidExpenses: number;
+    totalNotStartedTasks: number;
+    totalInProgressTasks: number;
+  };
 }

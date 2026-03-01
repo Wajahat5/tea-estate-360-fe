@@ -22,6 +22,7 @@ export const RequestsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [requests, setRequests] = useState<RequestsFetchItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -248,24 +249,33 @@ export const RequestsPage = () => {
 
       {requests.length > 0 && (
         <div className="panel request-group-panel">
-          <div className="panel-header">
+          <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Requests</h2>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Title</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Points</th>
-                <th>Labourers</th>
-                <th>Employees</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Points</th>
+                  <th>Labourers</th>
+                  <th>Employees</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase())).map((request) => (
                 <tr key={request._id}>
                   <td>
                     {request.image ? (
@@ -363,9 +373,10 @@ export const RequestsPage = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

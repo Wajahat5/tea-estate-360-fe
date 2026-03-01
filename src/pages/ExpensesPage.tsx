@@ -20,6 +20,7 @@ export const ExpensesPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -249,23 +250,33 @@ export const ExpensesPage = () => {
 
       {expenses.length > 0 && (
         <div className="panel request-group-panel">
-          <div className="panel-header">
+          <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Expense records</h2>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Title</th>
-                <th>Date</th>
-                <th>Request</th>
-                <th>Items</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.map((expense) => (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Request</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.filter((e) => e.title.toLowerCase().includes(searchQuery.toLowerCase())).map((expense) => (
                 <tr key={expense.expenseid}>
                   <td>
                     {expense.image ? (
@@ -294,6 +305,7 @@ export const ExpensesPage = () => {
                   <td>{expense.date}</td>
                   <td>{expense.req_id ?? "-"}</td>
                   <td>{expense.points.join(", ")}</td>
+                  <td>{expense.amount ?? 0}</td>
                   <td>
                     <button
                       type="button"
@@ -336,9 +348,10 @@ export const ExpensesPage = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

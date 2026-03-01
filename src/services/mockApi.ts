@@ -135,6 +135,7 @@ let expenses: Expense[] = [
     title: "Fertilizer purchase",
     req_id: requests[1].requestid,
     points: ["Urea", "Potash", "Micro nutrients"],
+    amount: 12500,
     status: "unpaid"
   },
   {
@@ -144,6 +145,7 @@ let expenses: Expense[] = [
     title: "Equipment maintenance",
     req_id: null,
     points: ["Pump service", "Generator diesel"],
+    amount: 4500,
     status: "paid"
   }
 ];
@@ -185,18 +187,28 @@ export const mockApi = {
       };
     },
 
-    async create(payload: CreateUserRequest): Promise<User> {
+    async create(payload: CreateUserRequest): Promise<{ user: User; token: string }> {
       await delay(400);
       const newUser: User & { password: string } = {
         userid: crypto.randomUUID(),
-        gardenid: payload.gardenid,
+        gardenid: "", // Defaults to empty during initial signup
         name: payload.name,
         phone: payload.phone,
         profession: payload.profession,
+        db_role: payload.profession === "owner" ? "crud" : "none",
         password: payload.password
       };
-      users.push(newUser);
-      return { ...newUser, password: undefined } as unknown as User;
+      // Keep mock current user up to date for tests
+      users.unshift(newUser); // Put at front so currentUser() finds it
+      return {
+        user: { ...newUser, password: undefined } as unknown as User,
+        token: `mock-token-${newUser.userid}`
+      };
+    },
+
+    async joinGarden(payload: { gardenid: string }): Promise<void> {
+      await delay(200);
+      // In a real app this creates a request. In mock, we just say okay.
     },
 
     async fetch(): Promise<User> {
@@ -212,7 +224,6 @@ export const mockApi = {
       }
       users[index] = {
         ...users[index],
-        gardenid: payload.gardenid,
         ...(payload.name ? { name: payload.name } : {}),
         ...(payload.phone ? { phone: payload.phone } : {}),
         ...(payload.profession ? { profession: payload.profession } : {}),
@@ -242,11 +253,56 @@ export const mockApi = {
   },
 
   company: {
+    async sendCode(payload: import("../types/api").SendCodeRequest): Promise<{ success: boolean; companyid: string }> {
+      await delay(300);
+      return { success: true, companyid: "mock-company-id-for-code" };
+    },
+    async verifyCode(payload: import("../types/api").VerifyCodeRequest): Promise<{ success: boolean; message: string; companyid: string }> {
+      await delay(300);
+      if (payload.code === "123456" || payload.code === "0000") { // 0000 for ease of testing
+        return { success: true, message: "Valid Code", companyid: "mock-company-id" };
+      }
+      throw new Error("Invalid Code");
+    },
+    async searchByName(name: string): Promise<import("../types/api").SearchCompanyResponse[]> {
+      await delay(300);
+      const lowerName = name.toLowerCase();
+      const match = companies.filter(c => c.name.toLowerCase().includes(lowerName));
+      return match.map(c => ({
+        companyid: c.companyid,
+        name: c.name,
+        image: "",
+        address: { state: c.state, district: c.district, pincode: c.pincode },
+        gardens: gardens.filter(g => g.companyid === c.companyid).map(g => ({
+          gardenid: g.gardenid,
+          image: "",
+          name: g.name,
+          address: { state: g.state, district: g.district, pincode: g.pincode }
+        }))
+      }));
+    },
+    async processRequest(payload: import("../types/api").ProcessJoinRequest): Promise<void> {
+      await delay(200);
+      const company = companies.find(c => c.companyid === payload.companyid);
+      if (company && company.access_requests) {
+         company.access_requests = company.access_requests.filter(
+             r => !(r.userid === payload.userid && r.gardenid === payload.gardenid)
+         );
+      }
+    },
+    async getGovtData(): Promise<{ labourer_daily_wage: number; labourer_extrawage_kg: number; labourer_extrawage_hr: number }> {
+      await delay(300);
+      return {
+        labourer_daily_wage: 200,
+        labourer_extrawage_kg: 10,
+        labourer_extrawage_hr: 7
+      };
+    },
     async create(payload: CreateCompanyRequest): Promise<Company> {
       await delay(300);
       const newCompany: Company = {
         ...payload,
-        companyid: crypto.randomUUID()
+        companyid: payload.companyid || crypto.randomUUID()
       };
       companies.push(newCompany);
       return newCompany;
@@ -278,19 +334,46 @@ export const mockApi = {
     },
     async list(): Promise<CompanyListItem[]> {
       await delay(200);
-      return companies.map((company) => ({
-        ...company,
-        gardens: gardens
-          .filter((garden) => garden.companyid === company.companyid)
-          .map((garden) => ({
-            gardenid: garden.gardenid,
-            name: garden.name,
-            state: garden.state,
-            district: garden.district,
-            pincode: garden.pincode,
-            companyid: garden.companyid
-          }))
-      }));
+      // Simulate "Not allowed to use db" if the user has db_role === 'none'
+      const currentUserObj = currentUser();
+      if (currentUserObj && currentUserObj.db_role === 'none') {
+         // This mock simulation throws an error similar to what httpApi does
+         const err = new Error("Not allowed to use db");
+         (err as any).isBlockedError = true;
+         // Actually, mockApi doesn't dispatch Redux actions. In a real scenario, httpApi catches 400.
+         // Let's just return what would happen. If we want to simulate it, we can import store.
+         // But the app is configured to use mock APIs. Let's just import store and dispatch for the mock.
+         const { store } = require("../store");
+         const { setBlocked } = require("../store/authSlice");
+         store.dispatch(setBlocked(true));
+         throw err;
+      }
+
+      return companies.map((company) => {
+        // Mock some access requests for testing UI
+        const access_requests = company.access_requests || [];
+        if (company.companyid === "6011c7b575326918c46a817f" && access_requests.length === 0) {
+            access_requests.push({
+                _id: "req1",
+                userid: "user-wanting-to-join",
+                gardenid: "6011c359104f274b806aefa3"
+            });
+        }
+        return {
+          ...company,
+          access_requests,
+          gardens: gardens
+            .filter((garden) => garden.companyid === company.companyid)
+            .map((garden) => ({
+              gardenid: garden.gardenid,
+              name: garden.name,
+              state: garden.state,
+              district: garden.district,
+              pincode: garden.pincode,
+              companyid: garden.companyid
+            }))
+        }
+      });
     }
   },
 
@@ -363,23 +446,40 @@ export const mockApi = {
       const labourer = labourers.find((l) => l.labourerid === labourerid);
       if (!labourer) throw new Error("Labourer not found");
     },
-    async list(): Promise<Labourer[]> {
+    async fetch(filter?: { gardenid?: string }): Promise<Labourer[]> {
       await delay(250);
-      return [...labourers];
+      let result = [...labourers];
+      if (filter?.gardenid) {
+        result = result.filter(l => l.gardenid === filter.gardenid);
+      }
+      return result;
     }
   },
 
   earnings: {
-    async addAttendance(_payload: AddAttendanceRequest): Promise<void> {
+    async fetchAttendance(payload: import("../types/api").FetchAttendanceRequest): Promise<any> {
+      await delay(200);
+      return { data: [] };
+    },
+    async addAttendance(_payload: import("../types/api").AddAttendanceRequest): Promise<void> {
       await delay(200);
     },
-    async updateAttendance(_payload: UpdateAttendanceRequest): Promise<void> {
+    async updateAttendance(_payload: import("../types/api").UpdateAttendanceRequest): Promise<void> {
       await delay(200);
     },
-    async addPayment(_payload: AddPaymentRequest): Promise<void> {
+    async batchFetch(payload: import("../types/api").BatchFetchRequest): Promise<any> {
+      await delay(200);
+      return { data: payload.labourers?.map((id) => ({
+        labourerid: id,
+        attendance: [],
+        total_earned: Math.floor(Math.random() * 5000),
+        status: "unpaid"
+      })) || [] };
+    },
+    async addPayment(_payload: import("../types/api").AddPaymentRequest): Promise<void> {
       await delay(200);
     },
-    async deletePayment(_payload: DeletePaymentRequest): Promise<void> {
+    async deletePayment(_payload: import("../types/api").DeletePaymentRequest): Promise<void> {
       await delay(200);
     }
   },
@@ -523,6 +623,7 @@ export const mockApi = {
       await delay(300);
       const newExpense: Expense = {
         ...expense,
+        amount: expense.amount || 0,
         expenseid: crypto.randomUUID(),
         status: "unpaid"
       };
@@ -537,7 +638,11 @@ export const mockApi = {
       if (index === -1) {
         throw new Error("Expense not found");
       }
-      expenses[index] = { ...expenses[index], ...payload };
+      expenses[index] = {
+        ...expenses[index],
+        ...payload,
+        amount: payload.amount !== undefined ? payload.amount : expenses[index].amount
+      };
       return expenses[index];
     },
     async delete(expenseid: string): Promise<void> {
@@ -627,295 +732,26 @@ export const mockApi = {
   },
 
   dashboard: {
-    async overview(query: DashboardQuery = {}): Promise<DashboardOverviewResponse> {
+    async summary(): Promise<import("../types/api").DashboardSummaryResponse> {
       await delay(250);
-      const scopedGardenIds = query.gardenid
-        ? [query.gardenid]
-        : gardens.map((garden) => garden.gardenid);
-      const scopedCompanyIds = companies.map((company) => company.companyid);
-      const scopedLabourers = labourers.filter((labourer) =>
-        scopedGardenIds.includes(labourer.gardenid)
-      );
-      const scopedEmployees = employees.filter(
-        (employee) => !employee.gardenid || scopedGardenIds.includes(employee.gardenid)
-      );
-      const scopedRequests = requests.filter((request) =>
-        scopedGardenIds.includes(request.gardenid)
-      );
-      const scopedExpenses = expenses.filter((expense) =>
-        scopedGardenIds.includes(expense.gardenid)
-      );
-      const scopedTasks = tasks.filter((task) =>
-        scopedGardenIds.includes(task.gardenid)
-      );
+      const totalLabourers = labourers.length;
+      const totalEmployees = employees.length;
+      const totalReviewRequests = requests.filter(r => r.status === "under_review").length;
+      const totalUnpaidExpenses = expenses.filter(e => e.status === "unpaid").length;
+      const totalNotStartedTasks = tasks.filter(t => t.status === "not_started").length;
+      const totalInProgressTasks = tasks.filter(t => t.status === "under_progress").length;
+
       return {
-        scope: {
-          companyids: scopedCompanyIds,
-          gardenids: scopedGardenIds,
-          from: query.from || "2026-02-01",
-          to: query.to || "2026-02-26",
-          tz: query.tz || "Asia/Kolkata"
-        },
-        kpis: {
-          total_labourers: scopedLabourers.length,
-          active_labourers: scopedLabourers.length,
-          total_employees: scopedEmployees.length,
-          present_days_total: scopedLabourers.length * 26,
-          wages_due: scopedLabourers.length * 5200,
-          wages_paid: scopedLabourers.length * 4300,
-          expense_unpaid_total: scopedExpenses
-            .filter((expense) => expense.status === "unpaid")
-            .length * 3000,
-          expense_paid_total: scopedExpenses
-            .filter((expense) => expense.status === "paid")
-            .length * 3000,
-          pending_requests_count: scopedRequests.filter(
-            (request) => request.status === "under_review"
-          ).length,
-          tasks_pending_count: scopedTasks.filter(
-            (task) => task.status === "not_started"
-          ).length,
-          tasks_in_progress_count: scopedTasks.filter(
-            (task) => task.status === "under_progress"
-          ).length,
-          tasks_completed_count: scopedTasks.filter(
-            (task) => task.status === "completed"
-          ).length
-        },
-        quick_status: {
-          requests: {
-            under_review: scopedRequests.filter(
-              (request) => request.status === "under_review"
-            ).length,
-            approved: scopedRequests.filter(
-              (request) => request.status === "approved"
-            ).length
-          },
-          expenses: {
-            paid: scopedExpenses.filter((expense) => expense.status === "paid")
-              .length,
-            unpaid: scopedExpenses.filter((expense) => expense.status === "unpaid")
-              .length
-          },
-          tasks: {
-            not_started: scopedTasks.filter(
-              (task) => task.status === "not_started"
-            ).length,
-            under_progress: scopedTasks.filter(
-              (task) => task.status === "under_progress"
-            ).length,
-            completed: scopedTasks.filter((task) => task.status === "completed")
-              .length
-          }
-        },
-        updated_at: new Date().toISOString()
-      };
-    },
-    async trends(): Promise<DashboardTrendsResponse> {
-      await delay(200);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        series: [
-          {
-            key: "attendance",
-            label: "Attendance",
-            points: [{ x: "2026-02-01", y: labourers.length * 20 }]
-          },
-          {
-            key: "wages_paid",
-            label: "Wages Paid",
-            points: [{ x: "2026-02-01", y: labourers.length * 4300 }]
-          },
-          {
-            key: "wages_due",
-            label: "Wages Due",
-            points: [{ x: "2026-02-01", y: labourers.length * 5200 }]
-          },
-          {
-            key: "expenses",
-            label: "Expenses",
-            points: [
-              {
-                x: "2026-02-01",
-                paid: expenses.filter((expense) => expense.status === "paid")
-                  .length,
-                unpaid: expenses.filter((expense) => expense.status === "unpaid")
-                  .length
-              }
-            ]
-          },
-          {
-            key: "requests",
-            label: "Requests",
-            points: [
-              {
-                x: "2026-02-01",
-                under_review: requests.filter(
-                  (request) => request.status === "under_review"
-                ).length,
-                approved: requests.filter(
-                  (request) => request.status === "approved"
-                ).length
-              }
-            ]
-          },
-          {
-            key: "tasks",
-            label: "Tasks",
-            points: [
-              {
-                x: "2026-02-01",
-                not_started: tasks.filter((task) => task.status === "not_started")
-                  .length,
-                under_progress: tasks.filter(
-                  (task) => task.status === "under_progress"
-                ).length,
-                completed: tasks.filter((task) => task.status === "completed")
-                  .length
-              }
-            ]
-          }
-        ]
-      };
-    },
-    async recentActivity(): Promise<DashboardRecentActivityResponse> {
-      await delay(200);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        items: [
-          ...requests.slice(0, 3).map((request) => ({
-            id: `req_${request.requestid}`,
-            type: "request" as const,
-            title: request.title,
-            gardenid: request.gardenid,
-            garden_name:
-              gardens.find((garden) => garden.gardenid === request.gardenid)?.name ||
-              request.gardenid,
-            status: request.status,
-            date: request.date,
-            meta: { points_count: request.points.length }
-          })),
-          ...expenses.slice(0, 3).map((expense) => ({
-            id: `exp_${expense.expenseid}`,
-            type: "expense" as const,
-            title: expense.title,
-            gardenid: expense.gardenid,
-            garden_name:
-              gardens.find((garden) => garden.gardenid === expense.gardenid)?.name ||
-              expense.gardenid,
-            status: expense.status,
-            date: expense.date,
-            meta: { amount: expense.points.length * 1000 }
-          })),
-          ...tasks.slice(0, 3).map((task) => ({
-            id: `task_${task.taskid}`,
-            type: "task" as const,
-            title: task.title,
-            gardenid: task.gardenid,
-            garden_name:
-              gardens.find((garden) => garden.gardenid === task.gardenid)?.name ||
-              task.gardenid,
-            status: task.status,
-            date: task.date,
-            meta: {}
-          }))
-        ].slice(0, 20)
-      };
-    },
-    async alerts(): Promise<DashboardAlertsResponse> {
-      await delay(150);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        alerts: [
-          {
-            code: "EXPENSE_UNPAID_HIGH",
-            severity: "warning",
-            title: "High unpaid expenses",
-            description: "Unpaid expenses exceeded configured threshold.",
-            count: expenses.filter((expense) => expense.status === "unpaid").length,
-            amount: expenses.filter((expense) => expense.status === "unpaid").length * 3000
-          },
-          {
-            code: "REQUESTS_PENDING",
-            severity: "info",
-            title: "Pending approval requests",
-            description: "Requests waiting for review.",
-            count: requests.filter((request) => request.status === "under_review")
-              .length
-          },
-          {
-            code: "TASKS_NOT_STARTED",
-            severity: "info",
-            title: "Tasks not started",
-            description: "Tasks pending start in selected scope.",
-            count: tasks.filter((task) => task.status === "not_started").length
-          }
-        ]
-      };
-    },
-    async gardenBreakdown(): Promise<DashboardGardenBreakdownResponse> {
-      await delay(180);
-      return {
-        scope: {
-          companyids: companies.map((company) => company.companyid),
-          gardenids: gardens.map((garden) => garden.gardenid),
-          from: "2026-02-01",
-          to: "2026-02-26",
-          tz: "Asia/Kolkata"
-        },
-        gardens: gardens.map((garden) => ({
-          gardenid: garden.gardenid,
-          garden_name: garden.name,
-          labourers: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length,
-          employees: employees.filter(
-            (employee) => employee.gardenid === garden.gardenid
-          ).length,
-          attendance: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length * 26,
-          wages_due: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length * 5200,
-          wages_paid: labourers.filter((labourer) => labourer.gardenid === garden.gardenid)
-            .length * 4300,
-          expenses_paid: expenses.filter(
-            (expense) =>
-              expense.gardenid === garden.gardenid && expense.status === "paid"
-          ).length * 3000,
-          expenses_unpaid: expenses.filter(
-            (expense) =>
-              expense.gardenid === garden.gardenid && expense.status === "unpaid"
-          ).length * 3000,
-          requests_under_review: requests.filter(
-            (request) =>
-              request.gardenid === garden.gardenid &&
-              request.status === "under_review"
-          ).length,
-          tasks_not_started: tasks.filter(
-            (task) => task.gardenid === garden.gardenid && task.status === "not_started"
-          ).length,
-          tasks_under_progress: tasks.filter(
-            (task) =>
-              task.gardenid === garden.gardenid && task.status === "under_progress"
-          ).length
-        }))
+        success: true,
+        message: "Dashboard summary fetched successfully",
+        data: {
+          totalLabourers,
+          totalEmployees,
+          totalReviewRequests,
+          totalUnpaidExpenses,
+          totalNotStartedTasks,
+          totalInProgressTasks
+        }
       };
     }
   }

@@ -1,4 +1,4 @@
-import { FormEvent, useState, useMemo } from "react";
+import { FormEvent, useState, useMemo, useEffect } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
 import type {
@@ -184,24 +184,19 @@ export const LabourersPage = () => {
     setError(null);
     try {
       const data = selectedLabourerIds
-        .filter(id => attendancePresence[id] === "present")
         .map(id => ({
           labourerid: id,
           extra: Number(attendanceInputs[id]?.extra || 0),
           type: attendanceInputs[id]?.type || "hr"
         }));
 
-      if (data.length === 0) {
-        setError("Please mark at least one selected labourer as 'Present'.");
-        setLoading(false);
-        return;
-      }
-
       await apiService.earnings.addAttendance({
         date: attendanceDate,
         labourers: data
       });
       setSuccessMessage("Attendance added successfully");
+      // Optionally re-fetch attendance to update the display
+      await handleFetchAttendance();
     } catch (err) {
       setError((err as Error).message || "Failed to add attendance");
     } finally {
@@ -215,24 +210,19 @@ export const LabourersPage = () => {
     setError(null);
     try {
       const data = selectedLabourerIds
-        .filter(id => attendancePresence[id] === "present")
         .map(id => ({
           labourerid: id,
           extra: Number(attendanceInputs[id]?.extra || 0),
           type: attendanceInputs[id]?.type || "hr"
         }));
 
-      if (data.length === 0) {
-        setError("Please mark at least one selected labourer as 'Present'.");
-        setLoading(false);
-        return;
-      }
-
       await apiService.earnings.updateAttendance({
         date: attendanceDate,
         labourers: data
       });
       setSuccessMessage("Attendance updated successfully");
+      // Optionally re-fetch attendance to update the display
+      await handleFetchAttendance();
     } catch (err) {
       setError((err as Error).message || "Failed to update attendance");
     } finally {
@@ -245,6 +235,7 @@ export const LabourersPage = () => {
   };
 
   const handleFetchPayroll = async () => {
+    if (labourers.length === 0) return;
     setLoading(true);
     setError(null);
     try {
@@ -257,16 +248,50 @@ export const LabourersPage = () => {
       });
 
       const newData: Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }> = {};
-      if (resp && resp.data) {
-        resp.data.forEach((item: any) => {
-          newData[item.labourerid] = { total_earned: item.total_earned, status: item.status || "unpaid" };
+      // Also keep existing status if we just re-fetched payroll data so it doesn't wipe
+      if (Array.isArray(resp)) {
+        resp.forEach((item: any) => {
+           newData[item.labourerid] = {
+             total_earned: item.total_earned,
+             status: payrollData[item.labourerid]?.status || "-"
+           };
         });
       }
 
       setPayrollData(newData);
-      setSuccessMessage("Payroll fetched successfully");
     } catch (err) {
       setError((err as Error).message || "Failed to fetch payroll");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetchPaymentStatus = async () => {
+    if (labourers.length === 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const ymp = `${payrollYear}-${payrollMonth}-${payrollPart}`;
+      const labourerids = labourers.map(l => l.labourerid);
+      const resp = await apiService.earnings.fetchPaymentStatus({
+        labourerids,
+        ymp
+      });
+
+      const newData = { ...payrollData };
+      if (Array.isArray(resp)) {
+        labourerids.forEach((id, index) => {
+           newData[id] = {
+             total_earned: newData[id]?.total_earned || 0,
+             status: resp[index] ? "paid" : "unpaid"
+           };
+        });
+      }
+
+      setPayrollData(newData);
+      setSuccessMessage("Payment status fetched successfully");
+    } catch (err) {
+      setError((err as Error).message || "Failed to fetch payment status");
     } finally {
       setLoading(false);
     }
@@ -278,23 +303,16 @@ export const LabourersPage = () => {
     setError(null);
     try {
       const ymp = `${payrollYear}-${payrollMonth}-${payrollPart}`;
+      const amounts = selectedLabourerIds.map(id => payrollData[id]?.total_earned || 0);
 
-      // The AddPayment backend endpoint only expects a single amount.
-      // But we can only add payments individually if they have different amounts.
-      // Alternatively, the prompt indicated "since it takes a single amount value representing the labourer's wage"
-      // Wait, let's look at what the user's backend requires.
-      // We will loop over selected labourers to call addPayment individually,
-      // because amount could be different per labourer.
-      for (const labourerid of selectedLabourerIds) {
-        const amount = payrollData[labourerid]?.total_earned || 0;
-        await apiService.earnings.addPayment({
-          labourerids: [labourerid],
-          ymp,
-          amount
-        });
-      }
+      await apiService.earnings.addPayment({
+        labourerids: selectedLabourerIds,
+        ymp,
+        amounts
+      });
+
       setSuccessMessage("Payments added successfully");
-      await handleFetchPayroll();
+      await handleFetchPaymentStatus();
     } catch (err) {
       setError((err as Error).message || "Failed to add payment");
     } finally {
@@ -314,7 +332,7 @@ export const LabourersPage = () => {
         ymp
       });
       setSuccessMessage("Payments deleted successfully");
-      await handleFetchPayroll();
+      await handleFetchPaymentStatus();
     } catch (err) {
       setError((err as Error).message || "Failed to delete payment");
     } finally {
@@ -322,18 +340,29 @@ export const LabourersPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (activeTab === "payrole" && labourers.length > 0) {
+      handleFetchPayroll();
+    }
+  }, [activeTab, payrollYear, payrollMonth, payrollPart, labourers.length]);
+
   const handleFetchLeaves = async () => {
     if (!leavesDate) {
       setError("Please select a date to fetch leaves.");
       return;
     }
+    if (selectedLabourerIds.length === 0) {
+      setError("Please select at least one labourer to fetch leaves for.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const newLeavesData: Record<string, number> = {};
-      for (const labourer of labourers) {
-        const resp = await apiService.labourer.fetchAvailableLeaves(labourer.labourerid, leavesDate);
-        newLeavesData[labourer.labourerid] = resp.leaves;
+      const newLeavesData: Record<string, number> = { ...leavesData };
+      for (const id of selectedLabourerIds) {
+        const resp = await apiService.labourer.fetchAvailableLeaves(id, leavesDate);
+        newLeavesData[id] = resp.leaves;
       }
       setLeavesData(newLeavesData);
       setSuccessMessage("Leaves fetched successfully");
@@ -614,16 +643,9 @@ return (
                     </td>
                     <td>{l.name}</td>
                     <td>
-                      <select
-                        className="field-input"
-                        style={{ margin: 0, padding: '4px 8px' }}
-                        value={attendancePresence[l.labourerid] || "-"}
-                        onChange={(e) => setAttendancePresence(prev => ({ ...prev, [l.labourerid]: e.target.value }))}
-                      >
-                        <option value="-">-</option>
-                        <option value="present">Present</option>
-                        <option value="absent">Absent</option>
-                      </select>
+                      <span className="status-badge" style={{ backgroundColor: attendancePresence[l.labourerid] === "present" ? '#10b981' : attendancePresence[l.labourerid] === "absent" ? '#ef4444' : '#e5e7eb', color: attendancePresence[l.labourerid] === "-" || !attendancePresence[l.labourerid] ? '#374151' : 'white' }}>
+                        {attendancePresence[l.labourerid] || "-"}
+                      </span>
                     </td>
                     <td>
                       <input
@@ -692,6 +714,19 @@ return (
             <table className="table">
               <thead>
                 <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLabourerIds(filteredLabourers.map(l => l.labourerid));
+                        } else {
+                          setSelectedLabourerIds([]);
+                        }
+                      }}
+                      checked={selectedLabourerIds.length > 0 && selectedLabourerIds.length === filteredLabourers.length}
+                    />
+                  </th>
                   <th>Name</th>
                   <th>Available Leaves</th>
                   <th>Start Date</th>
@@ -703,6 +738,19 @@ return (
               <tbody>
                 {filteredLabourers.map((l) => (
                   <tr key={l.labourerid}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedLabourerIds.includes(l.labourerid)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLabourerIds(prev => [...prev, l.labourerid]);
+                          } else {
+                            setSelectedLabourerIds(prev => prev.filter(id => id !== l.labourerid));
+                          }
+                        }}
+                      />
+                    </td>
                     <td>{l.name}</td>
                     <td>{leavesData[l.labourerid] !== undefined ? leavesData[l.labourerid] : "-"}</td>
                     <td>
@@ -788,8 +836,8 @@ return (
                 <option value="1">1st Part</option>
                 <option value="2">2nd Part</option>
               </select>
-              <button className="primary-button" onClick={handleFetchPayroll} disabled={loading}>
-                Fetch
+              <button className="primary-button" onClick={handleFetchPaymentStatus} disabled={loading}>
+                Fetch Status
               </button>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>

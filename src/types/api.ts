@@ -198,7 +198,12 @@ export interface BatchFetchResponse {
 export interface AddPaymentRequest {
   labourerids: string[];
   ymp: string;
-  amount: number;
+  amounts: number[];
+}
+
+export interface FetchPaymentStatusRequest {
+  labourerids: string[];
+  ymp: string;
 }
 
 export interface DeletePaymentRequest {

@@ -486,6 +486,10 @@ export const mockApi = {
     async addPayment(_payload: import("../types/api").AddPaymentRequest): Promise<void> {
       await delay(200);
     },
+    async fetchPaymentStatus(payload: import("../types/api").FetchPaymentStatusRequest): Promise<boolean[]> {
+      await delay(200);
+      return payload.labourerids.map(() => Math.random() > 0.5);
+    },
     async deletePayment(_payload: import("../types/api").DeletePaymentRequest): Promise<void> {
       await delay(200);
     }

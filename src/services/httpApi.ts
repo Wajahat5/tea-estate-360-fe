@@ -524,6 +524,11 @@ export const httpApi = {
         method: "POST",
         body: JSON.stringify(body)
       }),
+    fetchPaymentStatus: (body: import("../types/api").FetchPaymentStatusRequest) =>
+      request<boolean[]>("/earning/fetch-status", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
     deletePayment: (body: import("../types/api").DeletePaymentRequest) =>
       request<void>("/earning/delete-payment", {
         method: "DELETE",

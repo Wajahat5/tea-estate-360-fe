@@ -438,6 +438,15 @@ export const httpApi = {
       request<void>("/labourer/remove-image", {
         method: "DELETE",
         body: JSON.stringify({ labourerid })
+      }),
+    addLeave: (body: import("../types/api").LabourerLeaveRequest) =>
+      request<void>("/labourer/add-leave", {
+        method: "PUT",
+        body: JSON.stringify(body)
+      }),
+    fetchAvailableLeaves: (labourerid: string, date: string) =>
+      request<{ leaves: number }>(`/labourer/${encodeURIComponent(labourerid)}/${encodeURIComponent(date)}`, {
+        method: "GET"
       })
   },
   employee: {
@@ -512,6 +521,11 @@ export const httpApi = {
       }),
     addPayment: (body: import("../types/api").AddPaymentRequest) =>
       request<void>("/earning/add-payment", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    fetchPaymentStatus: (body: import("../types/api").FetchPaymentStatusRequest) =>
+      request<boolean[]>("/earning/fetch-status", {
         method: "POST",
         body: JSON.stringify(body)
       }),

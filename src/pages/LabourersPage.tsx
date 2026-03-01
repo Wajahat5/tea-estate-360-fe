@@ -1,4 +1,4 @@
-import { FormEvent, useState, useMemo } from "react";
+import { FormEvent, useState, useMemo, useEffect } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
 import type {
@@ -21,7 +21,7 @@ export const LabourersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<"info" | "attendance" | "payrole">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "attendance" | "payrole" | "leaves">("info");
 
   // Attendance State
   const [selectedLabourerIds, setSelectedLabourerIds] = useState<string[]>([]);
@@ -37,7 +37,18 @@ export const LabourersPage = () => {
   const [payrollMonth, setPayrollMonth] = useState<string>((new Date().getMonth() + 1).toString().padStart(2, "0"));
   const [payrollPart, setPayrollPart] = useState<"1" | "2">("1");
   const [payrollData, setPayrollData] = useState<Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }>>({});
-  const [payrollTotal, setPayrollTotal] = useState(0);
+
+  const totalAmountToPay = useMemo(() => {
+    return labourers.reduce((total, l) => {
+      const earned = payrollData[l.labourerid]?.total_earned || 0;
+      return total + earned;
+    }, 0);
+  }, [labourers, payrollData]);
+
+  // Leaves State
+  const [leavesDate, setLeavesDate] = useState("");
+  const [leavesData, setLeavesData] = useState<Record<string, number>>({});
+  const [leaveInputs, setLeaveInputs] = useState<Record<string, { start: string; end: string; reason: string }>>({});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -46,6 +57,11 @@ export const LabourersPage = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const filteredLabourers = useMemo(() => {
+    if (!searchQuery) return labourers;
+    return labourers.filter((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [labourers, searchQuery]);
 
   const gardens = useMemo(() => {
     const ownedGardens = companies
@@ -139,17 +155,22 @@ export const LabourersPage = () => {
     setError(null);
     try {
       const resp = await apiService.earnings.fetchAttendance({
-        gardenid,
+        labourerids: labourers.map(l => l.labourerid),
         date: attendanceDate
       });
 
       const newInputs: Record<string, { extra: string; type: string }> = {};
       const newPresence: Record<string, string> = {};
 
-      if (resp && resp.data) {
-        resp.data.forEach(item => {
+      if (Array.isArray(resp)) {
+        labourers.forEach((l, i) => {
+          newPresence[l.labourerid] = resp[i] ? "present" : "-";
+          newInputs[l.labourerid] = { extra: "", type: "hr" };
+        });
+      } else if (resp && resp.data) {
+        resp.data.forEach((item: any) => {
           newPresence[item.labourerid] = item.status;
-          newInputs[item.labourerid] = { extra: item.extra.toString(), type: item.type };
+          newInputs[item.labourerid] = { extra: item.extra?.toString() || "", type: item.type || "hr" };
         });
       }
 
@@ -168,19 +189,20 @@ export const LabourersPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = selectedLabourerIds.map(id => ({
-        labourerid: id,
-        status: attendancePresence[id] || "present",
-        extra: Number(attendanceInputs[id]?.extra || 0),
-        type: attendanceInputs[id]?.type || "hr"
-      }));
+      const data = selectedLabourerIds
+        .map(id => ({
+          labourerid: id,
+          extra: Number(attendanceInputs[id]?.extra || 0),
+          type: attendanceInputs[id]?.type || "hr"
+        }));
 
       await apiService.earnings.addAttendance({
-        gardenid,
         date: attendanceDate,
-        data
+        labourers: data
       });
       setSuccessMessage("Attendance added successfully");
+      // Optionally re-fetch attendance to update the display
+      await handleFetchAttendance();
     } catch (err) {
       setError((err as Error).message || "Failed to add attendance");
     } finally {
@@ -193,19 +215,20 @@ export const LabourersPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = selectedLabourerIds.map(id => ({
-        labourerid: id,
-        status: attendancePresence[id] || "present",
-        extra: Number(attendanceInputs[id]?.extra || 0),
-        type: attendanceInputs[id]?.type || "hr"
-      }));
+      const data = selectedLabourerIds
+        .map(id => ({
+          labourerid: id,
+          extra: Number(attendanceInputs[id]?.extra || 0),
+          type: attendanceInputs[id]?.type || "hr"
+        }));
 
       await apiService.earnings.updateAttendance({
-        gardenid,
         date: attendanceDate,
-        data
+        labourers: data
       });
       setSuccessMessage("Attendance updated successfully");
+      // Optionally re-fetch attendance to update the display
+      await handleFetchAttendance();
     } catch (err) {
       setError((err as Error).message || "Failed to update attendance");
     } finally {
@@ -213,30 +236,67 @@ export const LabourersPage = () => {
     }
   };
 
+  const getCompanyIdByGardenId = (gid: string) => {
+    return gardens.find(g => g.gardenid === gid)?.companyid || companies[0]?.companyid || "";
+  };
 
   const handleFetchPayroll = async () => {
+    if (selectedLabourerIds.length === 0) return;
     setLoading(true);
     setError(null);
     try {
       const resp = await apiService.earnings.batchFetch({
-        gardenid,
+        companyid: getCompanyIdByGardenId(gardenid),
         year: payrollYear,
         month: payrollMonth,
         part: payrollPart,
-        labourers: labourers.map(l => l.labourerid)
+        labourerids: selectedLabourerIds
       });
 
-      const newData: Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }> = {};
-      if (resp && resp.data) {
-        resp.data.forEach((item: any) => {
-          newData[item.labourerid] = { total_earned: item.total_earned, status: item.status || "unpaid" };
+      const newData = { ...payrollData };
+      if (Array.isArray(resp)) {
+        resp.forEach((item: any) => {
+           newData[item.labourerid] = {
+             total_earned: item.total_earned,
+             status: newData[item.labourerid]?.status || "-"
+           };
         });
       }
 
       setPayrollData(newData);
-      setSuccessMessage("Payroll fetched successfully");
     } catch (err) {
       setError((err as Error).message || "Failed to fetch payroll");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetchPaymentStatus = async () => {
+    if (labourers.length === 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const ymp = `${payrollYear}-${payrollMonth}-${payrollPart}`;
+      const labourerids = labourers.map(l => l.labourerid);
+      const resp = await apiService.earnings.fetchPaymentStatus({
+        labourerids,
+        ymp
+      });
+
+      const newData = { ...payrollData };
+      if (Array.isArray(resp)) {
+        labourerids.forEach((id, index) => {
+           newData[id] = {
+             total_earned: newData[id]?.total_earned || 0,
+             status: resp[index] ? "paid" : "unpaid"
+           };
+        });
+      }
+
+      setPayrollData(newData);
+      setSuccessMessage("Payment status fetched successfully");
+    } catch (err) {
+      setError((err as Error).message || "Failed to fetch payment status");
     } finally {
       setLoading(false);
     }
@@ -247,15 +307,17 @@ export const LabourersPage = () => {
     setLoading(true);
     setError(null);
     try {
+      const ymp = `${payrollYear}-${payrollMonth}-${payrollPart}`;
+      const amounts = selectedLabourerIds.map(id => payrollData[id]?.total_earned || 0);
+
       await apiService.earnings.addPayment({
-        gardenid,
-        year: payrollYear,
-        month: payrollMonth,
-        part: payrollPart,
-        labourerids: selectedLabourerIds
+        labourerids: selectedLabourerIds,
+        ymp,
+        amounts
       });
+
       setSuccessMessage("Payments added successfully");
-      await handleFetchPayroll();
+      await handleFetchPaymentStatus();
     } catch (err) {
       setError((err as Error).message || "Failed to add payment");
     } finally {
@@ -268,17 +330,74 @@ export const LabourersPage = () => {
     setLoading(true);
     setError(null);
     try {
+      const ymp = `${payrollYear}-${payrollMonth}-${payrollPart}`;
       await apiService.earnings.deletePayment({
-        gardenid,
-        year: payrollYear,
-        month: payrollMonth,
-        part: payrollPart,
-        labourerids: selectedLabourerIds
+        companyid: getCompanyIdByGardenId(gardenid),
+        labourerids: selectedLabourerIds,
+        ymp
       });
       setSuccessMessage("Payments deleted successfully");
-      await handleFetchPayroll();
+      await handleFetchPaymentStatus();
     } catch (err) {
       setError((err as Error).message || "Failed to delete payment");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetchLeaves = async () => {
+    if (!leavesDate) {
+      setError("Please select a date to fetch leaves.");
+      return;
+    }
+    if (selectedLabourerIds.length === 0) {
+      setError("Please select at least one labourer to fetch leaves for.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const newLeavesData: Record<string, number> = { ...leavesData };
+      for (const id of selectedLabourerIds) {
+        const resp = await apiService.labourer.fetchAvailableLeaves(id, leavesDate);
+        newLeavesData[id] = resp.leaves;
+      }
+      setLeavesData(newLeavesData);
+      setSuccessMessage("Leaves fetched successfully");
+    } catch (err) {
+      setError((err as Error).message || "Failed to fetch leaves");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddLeave = async (labourerid: string) => {
+    const inputs = leaveInputs[labourerid];
+    if (!inputs?.start || !inputs?.end || !inputs?.reason) {
+      setError("Please fill in start date, end date, and reason to add leave.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await apiService.labourer.addLeave({
+        labourerid,
+        start: inputs.start,
+        end: inputs.end,
+        reason: inputs.reason
+      });
+      setSuccessMessage("Leave added successfully");
+      setLeaveInputs((prev) => ({
+        ...prev,
+        [labourerid]: { start: "", end: "", reason: "" }
+      }));
+      // Optionally refetch leaves if leavesDate is set
+      if (leavesDate) {
+        await handleFetchLeaves();
+      }
+    } catch (err) {
+      setError((err as Error).message || "Failed to add leave");
     } finally {
       setLoading(false);
     }
@@ -353,6 +472,12 @@ return (
           >
             Payrole
           </button>
+          <button
+            className={`tab-button ${activeTab === "leaves" ? "active" : ""}`}
+            onClick={() => setActiveTab("leaves")}
+          >
+            Leaves
+          </button>
         </div>
       )}
 
@@ -386,7 +511,7 @@ return (
               </tr>
             </thead>
             <tbody>
-              {labourers.filter((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase())).map((l) => (
+              {filteredLabourers.map((l) => (
               <tr key={l.labourerid}>
                 <td>
                   {l.image ? (
@@ -443,6 +568,14 @@ return (
       {labourers.length > 0 && activeTab === "attendance" && (
         <div className="panel request-group-panel">
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <label className="field-label" style={{ marginBottom: 0 }}>
                 Date:
@@ -477,12 +610,12 @@ return (
                       type="checkbox"
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedLabourerIds(labourers.map(l => l.labourerid));
+                          setSelectedLabourerIds(filteredLabourers.map(l => l.labourerid));
                         } else {
                           setSelectedLabourerIds([]);
                         }
                       }}
-                      checked={selectedLabourerIds.length > 0 && selectedLabourerIds.length === labourers.length}
+                      checked={selectedLabourerIds.length > 0 && selectedLabourerIds.length === filteredLabourers.length}
                     />
                   </th>
                   <th>Name</th>
@@ -492,7 +625,7 @@ return (
                 </tr>
               </thead>
               <tbody>
-                {labourers.map((l) => (
+                {filteredLabourers.map((l) => (
                   <tr key={l.labourerid}>
                     <td>
                       <input
@@ -509,16 +642,9 @@ return (
                     </td>
                     <td>{l.name}</td>
                     <td>
-                      <select
-                        className="field-input"
-                        style={{ margin: 0, padding: '4px 8px' }}
-                        value={attendancePresence[l.labourerid] || "-"}
-                        onChange={(e) => setAttendancePresence(prev => ({ ...prev, [l.labourerid]: e.target.value }))}
-                      >
-                        <option value="-">-</option>
-                        <option value="present">Present</option>
-                        <option value="absent">Absent</option>
-                      </select>
+                      <span>
+                        {attendancePresence[l.labourerid] || "-"}
+                      </span>
                     </td>
                     <td>
                       <input
@@ -555,10 +681,150 @@ return (
         </div>
       )}
 
+      {labourers.length > 0 && activeTab === "leaves" && (
+        <div className="panel request-group-panel">
+          <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <label className="field-label" style={{ marginBottom: 0 }}>
+                Date:
+                <input
+                  type="date"
+                  className="field-input"
+                  value={leavesDate}
+                  onChange={(e) => setLeavesDate(e.target.value)}
+                  style={{ marginLeft: '8px', marginBottom: 0 }}
+                />
+              </label>
+              <button className="primary-button" onClick={handleFetchLeaves} disabled={loading || !leavesDate}>
+                Fetch Leaves
+              </button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLabourerIds(filteredLabourers.map(l => l.labourerid));
+                        } else {
+                          setSelectedLabourerIds([]);
+                        }
+                      }}
+                      checked={selectedLabourerIds.length > 0 && selectedLabourerIds.length === filteredLabourers.length}
+                    />
+                  </th>
+                  <th>Name</th>
+                  <th>Available Leaves</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Reason</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLabourers.map((l) => (
+                  <tr key={l.labourerid}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedLabourerIds.includes(l.labourerid)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLabourerIds(prev => [...prev, l.labourerid]);
+                          } else {
+                            setSelectedLabourerIds(prev => prev.filter(id => id !== l.labourerid));
+                          }
+                        }}
+                      />
+                    </td>
+                    <td>{l.name}</td>
+                    <td>{leavesData[l.labourerid] !== undefined ? leavesData[l.labourerid] : "-"}</td>
+                    <td>
+                      <input
+                        type="date"
+                        className="field-input"
+                        style={{ margin: 0, padding: '4px 8px' }}
+                        value={leaveInputs[l.labourerid]?.start || ""}
+                        onChange={(e) => setLeaveInputs(prev => ({
+                          ...prev,
+                          [l.labourerid]: { ...prev[l.labourerid], start: e.target.value, reason: prev[l.labourerid]?.reason || "", end: prev[l.labourerid]?.end || "" }
+                        }))}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="date"
+                        className="field-input"
+                        style={{ margin: 0, padding: '4px 8px' }}
+                        value={leaveInputs[l.labourerid]?.end || ""}
+                        onChange={(e) => setLeaveInputs(prev => ({
+                          ...prev,
+                          [l.labourerid]: { ...prev[l.labourerid], end: e.target.value, reason: prev[l.labourerid]?.reason || "", start: prev[l.labourerid]?.start || "" }
+                        }))}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="field-input"
+                        placeholder="Reason"
+                        style={{ margin: 0, padding: '4px 8px' }}
+                        value={leaveInputs[l.labourerid]?.reason || ""}
+                        onChange={(e) => setLeaveInputs(prev => ({
+                          ...prev,
+                          [l.labourerid]: { ...prev[l.labourerid], reason: e.target.value, start: prev[l.labourerid]?.start || "", end: prev[l.labourerid]?.end || "" }
+                        }))}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="primary-button"
+                        style={{ padding: '4px 12px' }}
+                        onClick={() => handleAddLeave(l.labourerid)}
+                        disabled={loading || !leaveInputs[l.labourerid]?.start || !leaveInputs[l.labourerid]?.end || !leaveInputs[l.labourerid]?.reason}
+                      >
+                        Add Leave
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
 
       {labourers.length > 0 && activeTab === "payrole" && (
         <div className="panel request-group-panel">
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input
+                type="text"
+                className="field-input"
+                placeholder="Search by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ maxWidth: '300px', margin: 0 }}
+              />
+              <div style={{ fontWeight: "bold", marginLeft: "10px", color: "#374151" }}>
+                Total amount to pay: ₹{totalAmountToPay}
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <select className="field-input" value={payrollYear} onChange={e => setPayrollYear(e.target.value)} style={{ margin: 0 }}>
                 {Array.from({length: 5}, (_, i) => new Date().getFullYear() - i).map(year => (
@@ -574,8 +840,11 @@ return (
                 <option value="1">1st Part</option>
                 <option value="2">2nd Part</option>
               </select>
-              <button className="primary-button" onClick={handleFetchPayroll} disabled={loading}>
-                Fetch
+              <button className="primary-button" onClick={handleFetchPayroll} disabled={loading || selectedLabourerIds.length === 0}>
+                Fetch Earnings
+              </button>
+              <button className="primary-button" onClick={handleFetchPaymentStatus} disabled={loading}>
+                Fetch Status
               </button>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -597,12 +866,12 @@ return (
                       type="checkbox"
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedLabourerIds(labourers.map(l => l.labourerid));
+                          setSelectedLabourerIds(filteredLabourers.map(l => l.labourerid));
                         } else {
                           setSelectedLabourerIds([]);
                         }
                       }}
-                      checked={selectedLabourerIds.length > 0 && selectedLabourerIds.length === labourers.length}
+                      checked={selectedLabourerIds.length > 0 && selectedLabourerIds.length === filteredLabourers.length}
                     />
                   </th>
                   <th>Name</th>
@@ -611,7 +880,7 @@ return (
                 </tr>
               </thead>
               <tbody>
-                {labourers.map((l) => (
+                {filteredLabourers.map((l) => (
                   <tr key={l.labourerid}>
                     <td>
                       <input

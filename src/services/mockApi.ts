@@ -453,6 +453,13 @@ export const mockApi = {
         result = result.filter(l => l.gardenid === filter.gardenid);
       }
       return result;
+    },
+    async addLeave(_payload: import("../types/api").LabourerLeaveRequest): Promise<void> {
+      await delay(250);
+    },
+    async fetchAvailableLeaves(_labourerid: string, _date: string): Promise<{ leaves: number }> {
+      await delay(250);
+      return { leaves: Math.floor(Math.random() * 10) + 1 };
     }
   },
 
@@ -478,6 +485,10 @@ export const mockApi = {
     },
     async addPayment(_payload: import("../types/api").AddPaymentRequest): Promise<void> {
       await delay(200);
+    },
+    async fetchPaymentStatus(payload: import("../types/api").FetchPaymentStatusRequest): Promise<boolean[]> {
+      await delay(200);
+      return payload.labourerids.map(() => Math.random() > 0.5);
     },
     async deletePayment(_payload: import("../types/api").DeletePaymentRequest): Promise<void> {
       await delay(200);

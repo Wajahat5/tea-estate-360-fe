@@ -18,6 +18,7 @@ export const LabourersPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [labourers, setLabourers] = useState<Labourer[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -167,23 +168,32 @@ export const LabourersPage = () => {
 
       {labourers.length > 0 && (
         <div className="panel request-group-panel">
-          <div className="panel-header">
+          <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Labourers</h2>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
           </div>
-          <table className="table">
-            <thead>
-            <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Gender</th>
-              <th>Marital Status</th>
-              <th>Address</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {labourers.map((l) => (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Gender</th>
+                <th>Marital Status</th>
+                <th>Address</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {labourers.filter((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase())).map((l) => (
               <tr key={l.labourerid}>
                 <td>
                   {l.image ? (
@@ -229,9 +239,10 @@ export const LabourersPage = () => {
                   </button>
                 </td>
               </tr>
-            ))}
-          </tbody>
-          </table>
+              ))}
+            </tbody>
+            </table>
+          </div>
         </div>
       )}
 

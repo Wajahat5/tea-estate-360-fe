@@ -19,6 +19,7 @@ export const EmployeesPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -190,21 +191,30 @@ export const EmployeesPage = () => {
 
       {employees.length > 0 && (
         <div className="panel request-group-panel">
-          <div className="panel-header">
+          <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Employees</h2>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Profession</th>
-                <th>Phone</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((employee) => (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Profession</th>
+                  <th>Phone</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.filter((e) => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map((employee) => (
                 <tr key={employee.employeeid}>
                   <td>
                     {employee.image ? (
@@ -261,9 +271,10 @@ export const EmployeesPage = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

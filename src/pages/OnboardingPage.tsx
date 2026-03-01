@@ -65,6 +65,15 @@ export const OnboardingPage = () => {
       const res = await apiService.company.verifyCode({ email, code: otp });
       if (res.success) {
         setCompanyId(res.companyid);
+        const govtData = await apiService.company.getGovtData?.();
+        if (govtData) {
+          setCompanyDetails((prev) => ({
+            ...prev,
+            labourer_daily_wage: govtData.labourer_daily_wage,
+            labourer_extrawage_per_kg: govtData.labourer_extrawage_kg,
+            labourer_extrawage_per_hr: govtData.labourer_extrawage_hr
+          }));
+        }
         setMode("create_company_details");
       }
     } catch (err) {

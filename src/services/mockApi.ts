@@ -290,6 +290,14 @@ export const mockApi = {
          );
       }
     },
+    async getGovtData(): Promise<{ labourer_daily_wage: number; labourer_extrawage_kg: number; labourer_extrawage_hr: number }> {
+      await delay(300);
+      return {
+        labourer_daily_wage: 200,
+        labourer_extrawage_kg: 10,
+        labourer_extrawage_hr: 7
+      };
+    },
     async create(payload: CreateCompanyRequest): Promise<Company> {
       await delay(300);
       const newCompany: Company = {

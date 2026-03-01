@@ -35,3 +35,11 @@
 12:31:48 PM [vite] hmr update /src/ui/FormModal.tsx
 12:31:54 PM [vite] hmr update /src/ui/FormModal.tsx
 12:50:30 PM [vite] hmr update /src/pages/CompaniesPage.tsx
+6:46:02 AM [vite] page reload src/store/authSlice.ts
+6:54:01 AM [vite] hmr update /src/pages/LoginPage.tsx, /src/pages/SignupPage.tsx, /src/layouts/DashboardLayout.tsx, /src/pages/ExpensesPage.tsx, /src/pages/LabourersPage.tsx, /src/pages/GardensPage.tsx, /src/pages/TasksPage.tsx, /src/pages/CompaniesPage.tsx, /src/pages/EmployeesPage.tsx, /src/pages/RequestsPage.tsx, /src/pages/DashboardPage.tsx, /src/pages/OnboardingPage.tsx, /src/ui/FormModal.tsx
+6:55:10 AM [vite] hmr update /src/pages/LoginPage.tsx, /src/pages/SignupPage.tsx, /src/layouts/DashboardLayout.tsx, /src/pages/ExpensesPage.tsx, /src/pages/LabourersPage.tsx, /src/pages/GardensPage.tsx, /src/pages/TasksPage.tsx, /src/pages/CompaniesPage.tsx, /src/pages/EmployeesPage.tsx, /src/pages/RequestsPage.tsx, /src/pages/DashboardPage.tsx, /src/pages/OnboardingPage.tsx, /src/ui/FormModal.tsx
+6:57:43 AM [vite] hmr update /src/ui/FormModal.tsx
+6:58:38 AM [vite] hmr update /src/ui/FormModal.tsx
+6:59:42 AM [vite] hmr update /src/ui/FormModal.tsx
+7:06:20 AM [vite] hmr update /src/ui/FormModal.tsx
+7:12:45 AM [vite] hmr update /src/pages/OnboardingPage.tsx

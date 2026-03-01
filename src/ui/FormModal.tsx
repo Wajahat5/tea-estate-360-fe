@@ -430,6 +430,16 @@ export const FormModal = ({
             const res = await apiService.company.verifyCode({ email: flowEmail, code: flowOtp });
             if (res.success) {
               setFlowCompanyId(res.companyid);
+              // Fetch govt data
+              const govtData = await apiService.company.getGovtData?.();
+              if (govtData) {
+                setCompanyFormData((prev) => ({
+                  ...prev,
+                  labourer_daily_wage: govtData.labourer_daily_wage,
+                  labourer_extrawage_per_kg: govtData.labourer_extrawage_kg,
+                  labourer_extrawage_per_hr: govtData.labourer_extrawage_hr,
+                }));
+              }
               setFlowStep("company");
             }
           } finally {
@@ -628,7 +638,7 @@ export const FormModal = ({
       );
     }
     if (flowStep === "company") {
-      return renderCompanyForm();
+      return renderCompanyForm(true);
     }
     if (flowStep === "garden") {
       return renderGardenForm();
@@ -636,7 +646,7 @@ export const FormModal = ({
     return null;
   };
 
-  const renderCompanyForm = () => (
+  const renderCompanyForm = (isFlowStep = false) => (
     <>
       <label className="field-label">
         Name
@@ -656,20 +666,24 @@ export const FormModal = ({
         Pincode
         <input className="field-input" name="pincode" value={companyFormData.pincode} onChange={handleCompanyChange} required />
       </label>
-      <label className="field-label">
-        Daily Wage (Rs)
-        <input className="field-input" type="number" name="labourer_daily_wage" value={companyFormData.labourer_daily_wage} onChange={handleCompanyChange} />
-      </label>
-      <div style={{ display: "flex", gap: "10px" }}>
-        <label className="field-label" style={{ flex: 1 }}>
-          Wage/kg (Rs)
-          <input className="field-input" type="number" name="labourer_extrawage_per_kg" value={companyFormData.labourer_extrawage_per_kg} onChange={handleCompanyChange} />
-        </label>
-        <label className="field-label" style={{ flex: 1 }}>
-          Wage/hr (Rs)
-          <input className="field-input" type="number" name="labourer_extrawage_per_hr" value={companyFormData.labourer_extrawage_per_hr} onChange={handleCompanyChange} />
-        </label>
-      </div>
+      {!isFlowStep && (
+        <>
+          <label className="field-label">
+            Daily Wage (Rs)
+            <input className="field-input" type="number" name="labourer_daily_wage" value={companyFormData.labourer_daily_wage} onChange={handleCompanyChange} />
+          </label>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <label className="field-label" style={{ flex: 1 }}>
+              Wage/kg (Rs)
+              <input className="field-input" type="number" name="labourer_extrawage_per_kg" value={companyFormData.labourer_extrawage_per_kg} onChange={handleCompanyChange} />
+            </label>
+            <label className="field-label" style={{ flex: 1 }}>
+              Wage/hr (Rs)
+              <input className="field-input" type="number" name="labourer_extrawage_per_hr" value={companyFormData.labourer_extrawage_per_hr} onChange={handleCompanyChange} />
+            </label>
+          </div>
+        </>
+      )}
 
       {mode === "update" && renderImageUpload(company?.image)}
     </>

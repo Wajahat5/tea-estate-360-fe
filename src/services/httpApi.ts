@@ -317,8 +317,12 @@ export const httpApi = {
       }),
     processRequest: (body: import("../types/api").ProcessJoinRequest) =>
       request<void>("/company/process-request", {
-        method: "PATCH",
+        method: "POST",
         body: JSON.stringify(body)
+      }),
+    getGovtData: () =>
+      request<{ labourer_daily_wage: number; labourer_extrawage_kg: number; labourer_extrawage_hr: number }>("/company/govt-data", {
+        method: "GET"
       }),
     create: (body: CreateCompanyRequest) =>
       request<RawCompanyListItem>("/company/create", {

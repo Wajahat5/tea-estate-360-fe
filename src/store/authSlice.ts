@@ -28,6 +28,7 @@ const authSlice = createSlice({
     clearAuth(state) {
       state.token = null;
       state.user = null;
+      state.isBlocked = false;
     },
     setUser(state, action: PayloadAction<User | null>) {
       state.user = action.payload;

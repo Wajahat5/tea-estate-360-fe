@@ -241,7 +241,7 @@ export const LabourersPage = () => {
   };
 
   const handleFetchPayroll = async () => {
-    if (labourers.length === 0) return;
+    if (selectedLabourerIds.length === 0) return;
     setLoading(true);
     setError(null);
     try {
@@ -250,16 +250,15 @@ export const LabourersPage = () => {
         year: payrollYear,
         month: payrollMonth,
         part: payrollPart,
-        labourerids: labourers.map(l => l.labourerid)
+        labourerids: selectedLabourerIds
       });
 
-      const newData: Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }> = {};
-      // Also keep existing status if we just re-fetched payroll data so it doesn't wipe
+      const newData = { ...payrollData };
       if (Array.isArray(resp)) {
         resp.forEach((item: any) => {
            newData[item.labourerid] = {
              total_earned: item.total_earned,
-             status: payrollData[item.labourerid]?.status || "-"
+             status: newData[item.labourerid]?.status || "-"
            };
         });
       }
@@ -345,12 +344,6 @@ export const LabourersPage = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (activeTab === "payrole" && labourers.length > 0) {
-      handleFetchPayroll();
-    }
-  }, [activeTab, payrollYear, payrollMonth, payrollPart, labourers.length]);
 
   const handleFetchLeaves = async () => {
     if (!leavesDate) {
@@ -649,7 +642,7 @@ return (
                     </td>
                     <td>{l.name}</td>
                     <td>
-                      <span style={{ color: "black", fontWeight: 500 }}>
+                      <span>
                         {attendancePresence[l.labourerid] || "-"}
                       </span>
                     </td>
@@ -847,6 +840,9 @@ return (
                 <option value="1">1st Part</option>
                 <option value="2">2nd Part</option>
               </select>
+              <button className="primary-button" onClick={handleFetchPayroll} disabled={loading || selectedLabourerIds.length === 0}>
+                Fetch Earnings
+              </button>
               <button className="primary-button" onClick={handleFetchPaymentStatus} disabled={loading}>
                 Fetch Status
               </button>

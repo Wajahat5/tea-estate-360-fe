@@ -6,6 +6,7 @@ import { auth } from "../services/auth";
 import { centralData } from "../services/centralData";
 import { clearAuth, setUser } from "../store/authSlice";
 import { clearError } from "../store/errorSlice";
+import { clearPageState } from "../hooks/usePageState";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { ErrorBanner } from "../ui/ErrorBanner";
 import { FormModal } from "../ui/FormModal";
@@ -61,6 +62,7 @@ export const DashboardLayout = () => {
       }
     }
     auth.clear();
+    clearPageState();
     dispatch(clearAuth());
     navigate("/login", { replace: true });
   };

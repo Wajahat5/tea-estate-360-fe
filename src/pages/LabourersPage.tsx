@@ -1,6 +1,7 @@
-import { FormEvent, useState, useMemo, useEffect } from "react";
+import { FormEvent, useState, useMemo } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
+import { usePageState } from "../hooks/usePageState";
 import type {
   CreateLabourerRequest,
   Labourer,
@@ -13,30 +14,29 @@ import { SuccessBanner } from "../ui/SuccessBanner";
 export const LabourersPage = () => {
   const companies = useAppSelector((state) => state.companies.items);
   const user = useAppSelector((state) => state.auth.user);
-  const [gardenid, setGardenid] = useState("");
+  const [gardenid, setGardenid] = usePageState("labourers_gardenid", "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [labourers, setLabourers] = useState<Labourer[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = usePageState("labourers_hasSearched", false);
+  const [labourers, setLabourers] = usePageState<Labourer[]>("labourers_list", []);
+  const [searchQuery, setSearchQuery] = usePageState("labourers_searchQuery", "");
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<"info" | "attendance" | "payrole" | "leaves">("info");
+  const [activeTab, setActiveTab] = usePageState<"info" | "attendance" | "payrole" | "leaves">("labourers_activeTab", "info");
 
   // Attendance State
-  const [selectedLabourerIds, setSelectedLabourerIds] = useState<string[]>([]);
-  const [attendanceDate, setAttendanceDate] = useState("");
+  const [selectedLabourerIds, setSelectedLabourerIds] = usePageState<string[]>("labourers_selectedIds", []);
+  const [attendanceDate, setAttendanceDate] = usePageState("labourers_attendanceDate", "");
   // Record of extra & type inputs for the UI map
-  const [attendanceInputs, setAttendanceInputs] = useState<Record<string, { extra: string; type: string }>>({});
+  const [attendanceInputs, setAttendanceInputs] = usePageState<Record<string, { extra: string; type: string }>>("labourers_attendanceInputs", {});
   // API presence array: stores "present", "absent", "-" mapped to labourer id
-  const [attendancePresence, setAttendancePresence] = useState<Record<string, string>>({});
-  const [attendanceTotal, setAttendanceTotal] = useState(0);
+  const [attendancePresence, setAttendancePresence] = usePageState<Record<string, string>>("labourers_attendancePresence", {});
 
   // Payroll State
-  const [payrollYear, setPayrollYear] = useState<string>(new Date().getFullYear().toString());
-  const [payrollMonth, setPayrollMonth] = useState<string>((new Date().getMonth() + 1).toString().padStart(2, "0"));
-  const [payrollPart, setPayrollPart] = useState<"1" | "2">("1");
-  const [payrollData, setPayrollData] = useState<Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }>>({});
+  const [payrollYear, setPayrollYear] = usePageState<string>("labourers_payrollYear", new Date().getFullYear().toString());
+  const [payrollMonth, setPayrollMonth] = usePageState<string>("labourers_payrollMonth", (new Date().getMonth() + 1).toString().padStart(2, "0"));
+  const [payrollPart, setPayrollPart] = usePageState<"1" | "2">("labourers_payrollPart", "1");
+  const [payrollData, setPayrollData] = usePageState<Record<string, { total_earned: number; status: "paid" | "unpaid" | "-" }>>("labourers_payrollData", {});
 
   const totalAmountToPay = useMemo(() => {
     return labourers.reduce((total, l) => {
@@ -46,9 +46,9 @@ export const LabourersPage = () => {
   }, [labourers, payrollData]);
 
   // Leaves State
-  const [leavesDate, setLeavesDate] = useState("");
-  const [leavesData, setLeavesData] = useState<Record<string, number>>({});
-  const [leaveInputs, setLeaveInputs] = useState<Record<string, { start: string; end: string; reason: string }>>({});
+  const [leavesDate, setLeavesDate] = usePageState("labourers_leavesDate", "");
+  const [leavesData, setLeavesData] = usePageState<Record<string, number>>("labourers_leavesData", {});
+  const [leaveInputs, setLeaveInputs] = usePageState<Record<string, { start: string; end: string; reason: string }>>("labourers_leaveInputs", {});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");
@@ -485,8 +485,8 @@ return (
         <NoResults message="No labourers found for the selected garden." />
       )}
 
-      {labourers.length > 0 && activeTab === "info" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "info" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <input
               type="text"
@@ -565,8 +565,8 @@ return (
       )}
 
 
-      {labourers.length > 0 && activeTab === "attendance" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "attendance" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <input
               type="text"
@@ -681,8 +681,8 @@ return (
         </div>
       )}
 
-      {labourers.length > 0 && activeTab === "leaves" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "leaves" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <input
               type="text"
@@ -809,8 +809,8 @@ return (
       )}
 
 
-      {labourers.length > 0 && activeTab === "payrole" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "payrole" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input

@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
+import { usePageState } from "../hooks/usePageState";
 import type {
   CreateEmployeeRequest,
   Employee,
@@ -14,12 +15,12 @@ import { SuccessBanner } from "../ui/SuccessBanner";
 export const EmployeesPage = () => {
   const companies = useAppSelector((state) => state.companies.items);
   const user = useAppSelector((state) => state.auth.user);
-  const [gardenid, setGardenid] = useState("");
+  const [gardenid, setGardenid] = usePageState("employees_gardenid", "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = usePageState("employees_hasSearched", false);
+  const [employees, setEmployees] = usePageState<Employee[]>("employees_list", []);
+  const [searchQuery, setSearchQuery] = usePageState("employees_searchQuery", "");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");

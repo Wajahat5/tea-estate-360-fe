@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
+import { usePageState } from "../hooks/usePageState";
 import type { MaintenanceRequest, RequestsFetchItem } from "../types/api";
 import { AlertModal } from "../ui/AlertModal";
 import { FormModal } from "../ui/FormModal";
@@ -12,17 +13,18 @@ const STATUS_OPTIONS = ["under_review", "approved"] as const;
 export const RequestsPage = () => {
   const companies = useAppSelector((state) => state.companies.items);
   const user = useAppSelector((state) => state.auth.user);
-  const [gardenid, setGardenid] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number]>(
+  const [gardenid, setGardenid] = usePageState("requests_gardenid", "");
+  const [from, setFrom] = usePageState("requests_from", "");
+  const [to, setTo] = usePageState("requests_to", "");
+  const [status, setStatus] = usePageState<(typeof STATUS_OPTIONS)[number]>(
+    "requests_status",
     "under_review"
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [requests, setRequests] = useState<RequestsFetchItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = usePageState("requests_hasSearched", false);
+  const [requests, setRequests] = usePageState<RequestsFetchItem[]>("requests_list", []);
+  const [searchQuery, setSearchQuery] = usePageState("requests_searchQuery", "");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");

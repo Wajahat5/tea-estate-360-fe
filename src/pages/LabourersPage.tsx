@@ -485,8 +485,8 @@ return (
         <NoResults message="No labourers found for the selected garden." />
       )}
 
-      {labourers.length > 0 && activeTab === "info" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "info" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <input
               type="text"
@@ -565,8 +565,8 @@ return (
       )}
 
 
-      {labourers.length > 0 && activeTab === "attendance" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "attendance" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <input
               type="text"
@@ -681,8 +681,8 @@ return (
         </div>
       )}
 
-      {labourers.length > 0 && activeTab === "leaves" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "leaves" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <input
               type="text"
@@ -809,8 +809,8 @@ return (
       )}
 
 
-      {labourers.length > 0 && activeTab === "payrole" && (
-        <div className="panel request-group-panel">
+      {labourers.length > 0 && (
+        <div className="panel request-group-panel" style={{ display: activeTab === "payrole" ? 'block' : 'none' }}>
           <div className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input

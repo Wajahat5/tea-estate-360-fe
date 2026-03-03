@@ -12,7 +12,7 @@ export const SignupPage = () => {
 
   useEffect(() => {
     if (centralData.initializeData()) {
-      navigate("/dashboard", { replace: true });
+      navigate("/companies", { replace: true });
     }
   }, [navigate]);
   const [name, setName] = useState("");

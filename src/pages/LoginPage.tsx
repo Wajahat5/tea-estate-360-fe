@@ -17,7 +17,7 @@ export const LoginPage = () => {
 
   useEffect(() => {
     if (centralData.initializeData()) {
-      navigate("/dashboard", { replace: true });
+      navigate("/companies", { replace: true });
     }
   }, [navigate]);
   const [phone, setPhone] = useState("+91");

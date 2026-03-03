@@ -42,21 +42,23 @@ export const DashboardLayout = () => {
     if (!isAuthenticated) {
       navigate("/login", { replace: true });
     } else {
+      // Implement stale-while-revalidate strategy:
+      // If no companies are cached, show a loading state by dispatching fetchCompaniesStart.
       if (companies.length === 0) {
         dispatch(fetchCompaniesStart());
-        apiService.company.list()
-          .then((fetchedCompanies) => {
-            auth.setCompanies(fetchedCompanies);
-            dispatch(fetchCompaniesSuccess(fetchedCompanies));
-          })
-          .catch((err) => {
-            console.error("Failed to fetch companies in layout:", err);
-            // Optionally, we could dispatch fetchCompaniesFailure here,
-            // but log is sufficient for smooth UX.
-          });
       }
+
+      // Always fetch fresh data in the background to update cache
+      apiService.company.list()
+        .then((fetchedCompanies) => {
+          auth.setCompanies(fetchedCompanies);
+          dispatch(fetchCompaniesSuccess(fetchedCompanies));
+        })
+        .catch((err) => {
+          console.error("Failed to fetch fresh companies data in layout:", err);
+        });
     }
-  }, [navigate, companies.length, dispatch]);
+  }, [navigate, dispatch]);
 
   const initials = user?.name
     ? user.name

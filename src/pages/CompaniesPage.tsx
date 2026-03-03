@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiService } from "../services/apiService";
 import { auth } from "../services/auth";
+import { usePageState } from "../hooks/usePageState";
 import {
   fetchCompaniesFailure,
   fetchCompaniesSuccess
@@ -24,18 +25,18 @@ export const CompaniesPage = () => {
     (state) => state.companies
   );
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "update">("create");
-  const [modalType, setModalType] = useState<"company" | "garden" | "company_flow">("company");
-  const [selectedCompany, setSelectedCompany] = useState<
+  const [isModalOpen, setIsModalOpen] = usePageState("companies_isModalOpen", false);
+  const [modalMode, setModalMode] = usePageState<"create" | "update">("companies_modalMode", "create");
+  const [modalType, setModalType] = usePageState<"company" | "garden" | "company_flow">("companies_modalType", "company");
+  const [selectedCompany, setSelectedCompany] = usePageState<
     CompanyListItem | undefined
-  >(undefined);
-  const [selectedGardenId, setSelectedGardenId] = useState<string | undefined>(
-    undefined
+  >("companies_selectedCompany", undefined);
+  const [selectedGardenId, setSelectedGardenId] = usePageState<string | undefined>(
+    "companies_selectedGardenId", undefined
   );
-  const [selectedCompanyIdForGarden, setSelectedCompanyIdForGarden] = useState<
+  const [selectedCompanyIdForGarden, setSelectedCompanyIdForGarden] = usePageState<
     string | undefined
-  >(undefined);
+  >("companies_selectedCompanyIdForGarden", undefined);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

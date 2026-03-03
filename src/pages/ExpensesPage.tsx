@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
+import { usePageState } from "../hooks/usePageState";
 import type { Expense } from "../types/api";
 import { AlertModal } from "../ui/AlertModal";
 import { FormModal } from "../ui/FormModal";
@@ -12,15 +13,15 @@ const STATUS_OPTIONS = ["paid", "unpaid"] as const;
 export const ExpensesPage = () => {
   const companies = useAppSelector((state) => state.companies.items);
   const user = useAppSelector((state) => state.auth.user);
-  const [gardenid, setGardenid] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number]>("unpaid");
+  const [gardenid, setGardenid] = usePageState("expenses_gardenid", "");
+  const [from, setFrom] = usePageState("expenses_from", "");
+  const [to, setTo] = usePageState("expenses_to", "");
+  const [status, setStatus] = usePageState<(typeof STATUS_OPTIONS)[number]>("expenses_status", "unpaid");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = usePageState("expenses_hasSearched", false);
+  const [expenses, setExpenses] = usePageState<Expense[]>("expenses_list", []);
+  const [searchQuery, setSearchQuery] = usePageState("expenses_searchQuery", "");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");

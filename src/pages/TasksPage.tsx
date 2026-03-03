@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { apiService } from "../services/apiService";
 import { useAppSelector } from "../store/hooks";
+import { usePageState } from "../hooks/usePageState";
 import type { CreateTaskRequest, Task, UpdateTaskRequest } from "../types/api";
 import { AlertModal } from "../ui/AlertModal";
 import { FormModal } from "../ui/FormModal";
@@ -10,14 +11,14 @@ import { SuccessBanner } from "../ui/SuccessBanner";
 export const TasksPage = () => {
   const companies = useAppSelector((state) => state.companies.items);
   const user = useAppSelector((state) => state.auth.user);
-  const [gardenid, setGardenid] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [gardenid, setGardenid] = usePageState("tasks_gardenid", "");
+  const [from, setFrom] = usePageState("tasks_from", "");
+  const [to, setTo] = usePageState("tasks_to", "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = usePageState("tasks_hasSearched", false);
+  const [tasks, setTasks] = usePageState<Task[]>("tasks_list", []);
+  const [searchQuery, setSearchQuery] = usePageState("tasks_searchQuery", "");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "update">("create");

@@ -4,5 +4,5 @@ export const config = {
   shouldUseMockAPIs: false,
 
   // Optional: base URL for real backend APIs when shouldUseMockAPIs is false
-  apiBaseUrl: shouldUseLocalBackend?"http://localhost:3000": "https://tea-garden-project.vercel.app",
+  apiBaseUrl: shouldUseLocalBackend?"http://localhost:3000": "https://tea-garden-project-be.vercel.app",
 };

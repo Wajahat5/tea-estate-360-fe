@@ -8,6 +8,7 @@ import { clearAuth, setUser } from "../store/authSlice";
 import { clearError } from "../store/errorSlice";
 import { clearPageState } from "../hooks/usePageState";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchCompaniesStart, fetchCompaniesSuccess } from "../store/companiesSlice";
 import { ErrorBanner } from "../ui/ErrorBanner";
 import { FormModal } from "../ui/FormModal";
 import { TeaEstateLogo } from "../ui/TeaEstateLogo";
@@ -40,8 +41,22 @@ export const DashboardLayout = () => {
     const isAuthenticated = centralData.initializeData();
     if (!isAuthenticated) {
       navigate("/login", { replace: true });
+    } else {
+      if (companies.length === 0) {
+        dispatch(fetchCompaniesStart());
+        apiService.company.list()
+          .then((fetchedCompanies) => {
+            auth.setCompanies(fetchedCompanies);
+            dispatch(fetchCompaniesSuccess(fetchedCompanies));
+          })
+          .catch((err) => {
+            console.error("Failed to fetch companies in layout:", err);
+            // Optionally, we could dispatch fetchCompaniesFailure here,
+            // but log is sufficient for smooth UX.
+          });
+      }
     }
-  }, [navigate]);
+  }, [navigate, companies.length, dispatch]);
 
   const initials = user?.name
     ? user.name

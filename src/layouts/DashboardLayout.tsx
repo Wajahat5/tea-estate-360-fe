@@ -8,6 +8,7 @@ import { clearAuth, setUser } from "../store/authSlice";
 import { clearError } from "../store/errorSlice";
 import { clearPageState } from "../hooks/usePageState";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchCompaniesStart, fetchCompaniesSuccess } from "../store/companiesSlice";
 import { ErrorBanner } from "../ui/ErrorBanner";
 import { FormModal } from "../ui/FormModal";
 import { TeaEstateLogo } from "../ui/TeaEstateLogo";
@@ -40,8 +41,24 @@ export const DashboardLayout = () => {
     const isAuthenticated = centralData.initializeData();
     if (!isAuthenticated) {
       navigate("/login", { replace: true });
+    } else {
+      // Implement stale-while-revalidate strategy:
+      // If no companies are cached, show a loading state by dispatching fetchCompaniesStart.
+      if (companies.length === 0) {
+        dispatch(fetchCompaniesStart());
+      }
+
+      // Always fetch fresh data in the background to update cache
+      apiService.company.list()
+        .then((fetchedCompanies) => {
+          auth.setCompanies(fetchedCompanies);
+          dispatch(fetchCompaniesSuccess(fetchedCompanies));
+        })
+        .catch((err) => {
+          console.error("Failed to fetch fresh companies data in layout:", err);
+        });
     }
-  }, [navigate]);
+  }, [navigate, dispatch]);
 
   const initials = user?.name
     ? user.name

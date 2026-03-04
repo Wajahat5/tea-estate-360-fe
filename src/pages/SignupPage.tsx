@@ -1,13 +1,20 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiService } from "../services/apiService";
 import { auth } from "../services/auth";
+import { centralData } from "../services/centralData";
 import { useAppDispatch } from "../store/hooks";
 import { setAuth } from "../store/authSlice";
 
 export const SignupPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (centralData.initializeData()) {
+      navigate("/companies", { replace: true });
+    }
+  }, [navigate]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+91");
   const [profession, setProfession] = useState("owner");

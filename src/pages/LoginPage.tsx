@@ -1,7 +1,8 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiService } from "../services/apiService";
 import { auth } from "../services/auth";
+import { centralData } from "../services/centralData";
 import { setAuth } from "../store/authSlice";
 import {
   fetchCompaniesFailure,
@@ -13,6 +14,12 @@ import { useAppDispatch } from "../store/hooks";
 export const LoginPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (centralData.initializeData()) {
+      navigate("/companies", { replace: true });
+    }
+  }, [navigate]);
   const [phone, setPhone] = useState("+91");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

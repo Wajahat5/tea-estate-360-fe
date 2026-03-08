@@ -1,3 +1,4 @@
+declare const require: any;
 import type {
   AddAttendanceRequest,
   AddPaymentRequest,
@@ -213,6 +214,21 @@ export const mockApi = {
   analytics: {
     teaYieldIntelligence: async (gardenId: string) => { await delay(300); return {}; },
   },
+  stg: {
+    addSupplier: async (body: import("../types/api").BoughtLeafSupplier) => { await delay(300); return { ...body, id: "sup-" + Math.random() }; },
+    setPrice: async (body: import("../types/api").BoughtLeafPrice) => { await delay(300); return { ...body, id: "prc-" + Math.random() }; },
+    addLog: async (body: import("../types/api").BoughtLeafLog) => { await delay(300); return { success: true, message: "Logged" }; },
+    getAnalytics: async (gardenId: string) => {
+      await delay(300);
+      return {
+        totalBoughtWeight: 5000,
+        totalBoughtCost: 125000,
+        averageBoughtCostPerKg: 25,
+        supplierRanking: [{ name: "Ram Singh STG", totalSuppliedKg: 5000, averageQualityScore: "8.50" }],
+        factoryContext: { totalInternalLeafInput: 15000, totalBoughtLeafInputProcessed: 5000, overallConversionRatio: "0.2200" }
+      };
+    }
+  },
 
   user: {
     async login(payload: LoginUserRequest): Promise<{ user: User; token: string }> {
@@ -326,9 +342,9 @@ export const mockApi = {
     async processRequest(payload: import("../types/api").ProcessJoinRequest): Promise<void> {
       await delay(200);
       const company = companies.find(c => c.companyid === payload.companyid);
-      if (company && company.access_requests) {
-         company.access_requests = company.access_requests.filter(
-             r => !(r.userid === payload.userid && r.gardenid === payload.gardenid)
+      if (company && (company as any).access_requests) {
+         (company as any).access_requests = (company as any).access_requests.filter(
+             (r: any) => !(r.userid === payload.userid && r.gardenid === payload.gardenid)
          );
       }
     },
@@ -393,7 +409,7 @@ export const mockApi = {
 
       return companies.map((company) => {
         // Mock some access requests for testing UI
-        const access_requests = company.access_requests || [];
+        const access_requests = (company as any).access_requests || [];
         if (company.companyid === "6011c7b575326918c46a817f" && access_requests.length === 0) {
             access_requests.push({
                 _id: "req1",
@@ -518,7 +534,7 @@ export const mockApi = {
     },
     async batchFetch(payload: import("../types/api").BatchFetchRequest): Promise<any> {
       await delay(200);
-      return { data: payload.labourers?.map((id) => ({
+      return { data: payload.labourerids?.map((id: any) => ({
         labourerid: id,
         attendance: [],
         total_earned: Math.floor(Math.random() * 5000),
@@ -596,7 +612,7 @@ export const mockApi = {
     async update(payload: MaintenanceRequest): Promise<MaintenanceRequest> {
       await delay(300);
       const index = requests.findIndex(
-        (r) => r.requestid === payload.requestid
+        (r: any) => r.requestid === payload.requestid
       );
       if (index === -1) {
         throw new Error("Request not found");
@@ -606,7 +622,7 @@ export const mockApi = {
     },
     async delete(requestid: string): Promise<void> {
       await delay(200);
-      requests = requests.filter((r) => r.requestid !== requestid);
+      requests = requests.filter((r: any) => r.requestid !== requestid);
     },
     async listByFilters(
       gardenid: string,
@@ -653,18 +669,18 @@ export const mockApi = {
       status: RequestStatus
     ): Promise<void> {
       await delay(200);
-      requests = requests.map((r) =>
+      requests = requests.map((r: any) =>
         ids.includes(r.requestid) ? { ...r, status } : r
       );
     },
     async uploadImage(requestid: string, _file: File): Promise<void> {
       await delay(300);
-      const request = requests.find((r) => r.requestid === requestid);
+      const request = requests.find((r: any) => r.requestid === requestid);
       if (!request) throw new Error("Request not found");
     },
     async removeImage(requestid: string): Promise<void> {
       await delay(300);
-      const request = requests.find((r) => r.requestid === requestid);
+      const request = requests.find((r: any) => r.requestid === requestid);
       if (!request) throw new Error("Request not found");
     }
   },

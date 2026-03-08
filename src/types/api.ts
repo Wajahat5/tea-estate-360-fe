@@ -45,6 +45,7 @@ export interface UpdateCompanyRequest {
 }
 
 export interface User {
+  gardens?: Array<{ gardenid: string; name?: string }>;
   userid: string;
   db_role?: string;
   gardenid: string;
@@ -68,6 +69,7 @@ export interface LoginUserRequest {
 }
 
 export interface UpdateUserRequest {
+  gardenid?: string;
   userid: string;
   name?: string;
   phone?: string;
@@ -446,7 +448,7 @@ export interface DashboardSummaryResponse {
 
 export interface GovtWageRequest { year: number; dailyWage: number; extraWageKg: number; extraWageHr: number; }
 export interface HolidayRequest { date: string; description: string; }
-export interface FactoryOutputRequest { gardenId: string; date: string; greenLeafInput: number; madeTeaOutput: number; gradeClassification: string; }
+export interface FactoryOutputRequest { gardenId: string; date: string; internalLeafInput: number; boughtLeafInput: number; madeTeaOutput: number; gradeClassification: string; }
 export interface TeaLotRequest { gardenId: string; factoryOutputId: string; lotNumber: string; invoiceNo: string; teaGrade: string; totalWeightKg: number; sampleWeightKg: number; productionDate: string; }
 export interface AuctionResultRequest { subLotCode: string; buyerId: string; pricePerKg: number; soldWeightKg: number; brokerCommission: number; marketCess: number; }
 export interface BuyerRequest { name: string; contact: string; }
@@ -460,3 +462,46 @@ export interface InventoryIssueRequest { itemId: string; sectionId: string; quan
 export interface AssetRequest { name: string; type: string; purchaseDate: string; }
 export interface AssetBreakdownRequest { assetId: string; date: string; description: string; }
 export interface ResolveBreakdownRequest { breakdownId: string; cost: number; resolutionDate: string; }
+
+export interface BoughtLeafSupplier {
+  id?: string;
+  name: string;
+  phone: string;
+  address: string;
+  supplierCode: string;
+  gardenIds: string[];
+}
+
+export interface BoughtLeafPrice {
+  id?: string;
+  effectiveDate: string;
+  pricePerKg: number;
+  gardenIds: string[];
+}
+
+export interface BoughtLeafLog {
+  id?: string;
+  supplierId: string;
+  gardenIds: string[];
+  grossWeight: number;
+  deductionWeight: number;
+  qualityScore: number;
+  vehicleNo: string;
+  date?: string;
+}
+
+export interface BoughtLeafAnalytics {
+  totalBoughtWeight: number;
+  totalBoughtCost: number;
+  averageBoughtCostPerKg: number;
+  supplierRanking: Array<{
+    name: string;
+    totalSuppliedKg: number;
+    averageQualityScore: string;
+  }>;
+  factoryContext: {
+    totalInternalLeafInput: number;
+    totalBoughtLeafInputProcessed: number;
+    overallConversionRatio: string;
+  };
+}

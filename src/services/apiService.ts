@@ -1,6 +1,7 @@
 import { config } from "../config";
 import { mockApi } from "./mockApi";
 import { httpApi } from "./httpApi";
+declare const require: any;
 
 // Wrap mock API to simulate the HTTP interceptor behavior for testing the block modal
 const wrapMockWithInterceptor = (mock: typeof mockApi) => {

@@ -22,11 +22,12 @@ const navItems = [
   { to: "/requests", label: "Requests" },
   { to: "/expenses", label: "Expenses" },
   { to: "/tasks", label: "To-Dos" },
-  { to: "/settings", label: "Settings" },
+  { to: "/bought-leaf", label: "Bought Leaf" },
+  { to: "/executive-dashboard", label: "Exec Dashboard" },
   { to: "/auction", label: "Auction" },
-  { to: "/executive-dashboard", label: "Executive Dash" },
   { to: "/inventory", label: "Inventory" },
-  { to: "/assets", label: "Assets" }
+  { to: "/assets", label: "Assets" },
+  { to: "/settings", label: "Settings" },
 ];
 
 export const DashboardLayout = () => {
@@ -101,7 +102,7 @@ export const DashboardLayout = () => {
       // Construct updated user object
       const updatedUser = {
         ...user!,
-        gardenid: payload.gardenid,
+        gardenid: payload.gardenid || "",
         name: payload.name || user!.name,
         phone: payload.phone || user!.phone,
         profession: payload.profession || user!.profession,

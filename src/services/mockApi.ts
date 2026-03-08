@@ -172,6 +172,48 @@ let tasks: Task[] = [
 const currentUser = () => users[0] as User;
 
 export const mockApi = {
+  admin: {
+    setGovtWage: async (body: import("../types/api").GovtWageRequest) => { await delay(300); },
+    addHoliday: async (body: import("../types/api").HolidayRequest) => { await delay(300); },
+    removeHoliday: async (date: string) => { await delay(300); },
+  },
+  auction: {
+    factoryOutput: async (body: import("../types/api").FactoryOutputRequest) => { await delay(300); },
+    addTeaLot: async (body: import("../types/api").TeaLotRequest) => { await delay(300); },
+    addResult: async (body: import("../types/api").AuctionResultRequest) => { await delay(300); },
+    addBuyer: async (body: import("../types/api").BuyerRequest) => { await delay(300); },
+    addPayment: async (body: import("../types/api").PaymentRequest) => { await delay(300); },
+    history: async (gardenId: string) => { await delay(300); return []; },
+    analytics: async (gardenId: string) => { await delay(300); return {}; },
+  },
+  weighment: {
+    getEvents: async () => { await delay(300); return []; },
+  },
+  payroll: {
+    createCycle: async (body: import("../types/api").PayrollCycleRequest) => { await delay(300); },
+    lockCycle: async (body: import("../types/api").LockPayrollCycleRequest) => { await delay(300); },
+    getPayslips: async (cycleId: string) => { await delay(300); return []; },
+    getComplianceReport: async () => { await delay(300); return {}; },
+  },
+  inventory: {
+    addItem: async (body: import("../types/api").InventoryItemRequest) => { await delay(300); },
+    addVendor: async (body: import("../types/api").VendorRequest) => { await delay(300); },
+    purchaseOrder: async (body: import("../types/api").PurchaseOrderRequest) => { await delay(300); },
+    issue: async (body: import("../types/api").InventoryIssueRequest) => { await delay(300); },
+    alerts: async (gardenId: string) => { await delay(300); return []; },
+  },
+  assets: {
+    add: async (body: import("../types/api").AssetRequest) => { await delay(300); },
+    addBreakdown: async (body: import("../types/api").AssetBreakdownRequest) => { await delay(300); },
+    resolveBreakdown: async (body: import("../types/api").ResolveBreakdownRequest) => { await delay(300); },
+  },
+  reports: {
+    costPerKg: async (gardenId: string) => { await delay(300); return {}; },
+  },
+  analytics: {
+    teaYieldIntelligence: async (gardenId: string) => { await delay(300); return {}; },
+  },
+
   user: {
     async login(payload: LoginUserRequest): Promise<{ user: User; token: string }> {
       await delay(400);

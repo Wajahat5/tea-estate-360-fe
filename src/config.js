@@ -1,4 +1,4 @@
-const shouldUseLocalBackend = false
+const shouldUseLocalBackend = true
 export const config = {
   // Toggle between mock APIs (true) and real backend APIs (false)
   shouldUseMockAPIs: false,

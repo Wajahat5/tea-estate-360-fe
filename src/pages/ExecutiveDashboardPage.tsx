@@ -47,15 +47,15 @@ export const ExecutiveDashboardPage = () => {
             <p>Loading...</p>
           ) : data ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="stat-card">
+              <div className="stat-card p-4 border rounded-lg shadow-sm">
                 <h3 className="text-gray-500">Total Revenue</h3>
                 <p className="text-2xl font-bold">${data.totalRevenue || 0}</p>
               </div>
-              <div className="stat-card">
+              <div className="stat-card p-4 border rounded-lg shadow-sm">
                 <h3 className="text-gray-500">Operating Expenses</h3>
                 <p className="text-2xl font-bold">${data.operatingExpenses || 0}</p>
               </div>
-              <div className="stat-card">
+              <div className="stat-card p-4 border rounded-lg shadow-sm">
                 <h3 className="text-gray-500">Net Margin</h3>
                 <p className="text-2xl font-bold">{data.netMargin || "0%"}</p>
               </div>

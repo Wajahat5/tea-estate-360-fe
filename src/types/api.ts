@@ -432,6 +432,12 @@ export interface DashboardGardenBreakdownResponse {
   }>;
 }
 
+export interface DashboardExecutiveResponse {
+  totalRevenue: number;
+  operatingExpenses: number;
+  netMargin: string;
+}
+
 export interface DashboardSummaryResponse {
   success: boolean;
   message: string;

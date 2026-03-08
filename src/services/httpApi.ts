@@ -36,7 +36,7 @@ import { setError } from "../store/errorSlice";
 const BASE_URL = config.apiBaseUrl.replace(/\/$/, "");
 
 type RawCompanyGarden = {
-  _id: string;
+  id: string;
   name: string;
   state: string;
   district: string;
@@ -45,7 +45,7 @@ type RawCompanyGarden = {
 };
 
 type RawCompanyListItem = {
-  _id: string;
+  id: string;
   name: string;
   state: string;
   district: string;
@@ -56,12 +56,12 @@ type RawCompanyListItem = {
   email?: string;
   ownerid?: string;
   image?: string;
-  access_requests?: Array<{ _id: string; gardenid: string; userid: string }>;
+  access_requests?: Array<{ id: string; gardenid: string; userid: string }>;
   gardens?: RawCompanyGarden[];
 };
 
 type RawUser = {
-  _id: string;
+  id: string;
   db_role?: string;
   gardenid: string;
   name: string;
@@ -77,14 +77,14 @@ type LoginResponse = {
 };
 
 type RawRequestsFetchItem = {
-  _id: string;
+  id: string;
   points: string[];
   status: "under_review" | "approved";
   gardenid: string;
   title: string;
   date: string;
   labourers?: Array<{
-    _id: string;
+    id: string;
     name: string;
     type?: string;
     married_status?: boolean;
@@ -93,7 +93,7 @@ type RawRequestsFetchItem = {
     image?: string;
   }>;
   employees?: Array<{
-    _id: string;
+    id: string;
     name: string;
     profession?: string;
     image?: string;
@@ -125,7 +125,7 @@ function buildQuery(
 }
 
 type RawEmployee = {
-  _id: string;
+  id: string;
   gardenid?: string;
   name: string;
   profession: string;
@@ -134,7 +134,7 @@ type RawEmployee = {
 };
 
 type RawLabourer = {
-  _id?: string;
+  id?: string;
   labourerid?: string;
   name: string;
   type: "permanent" | "casual" | "temporary";
@@ -270,7 +270,7 @@ export const httpApi = {
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
       const user: User = {
-        userid: rawUser._id,
+        userid: rawUser.id,
         db_role: rawUser.db_role,
         gardens: (rawUser as any).gardens,
         gardenid: rawUser.gardenid,
@@ -305,7 +305,7 @@ export const httpApi = {
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
       const user: User = {
-        userid: rawUser._id,
+        userid: rawUser.id,
         db_role: rawUser.db_role,
         gardenid: rawUser.gardenid,
         name: rawUser.name,
@@ -403,7 +403,7 @@ export const httpApi = {
       });
       return raw.map(
         (company): CompanyListItem => ({
-          companyid: company._id,
+          companyid: company.id,
           name: company.name,
           state: company.state,
           district: company.district,
@@ -416,7 +416,7 @@ export const httpApi = {
           image: company.image,
           access_requests: company.access_requests,
           gardens: (company.gardens || []).map((garden) => ({
-            gardenid: garden._id,
+            gardenid: garden.id,
             name: garden.name,
             state: garden.state,
             district: garden.district,
@@ -450,7 +450,7 @@ export const httpApi = {
       });
       return raw.map(
         (item): Labourer => ({
-          labourerid: item.labourerid || item._id || "",
+          labourerid: item.labourerid || item.id || "",
           name: item.name,
           type: item.type,
           gardenid: item.gardenid,
@@ -522,7 +522,7 @@ export const httpApi = {
       return raw
         .map(
           (employee): Employee => ({
-            employeeid: employee._id,
+            employeeid: employee.id,
             gardenid: employee.gardenid,
             name: employee.name,
             profession: employee.profession,
@@ -617,7 +617,7 @@ export const httpApi = {
       );
       return raw.map(
         (item): RequestsFetchItem => ({
-          _id: item._id,
+          id: item.id,
           points: item.points || [],
           status: item.status,
           gardenid: item.gardenid,
@@ -674,7 +674,7 @@ export const httpApi = {
       const raw = await request<
         Array<
           Omit<Expense, "expenseid"> & {
-            _id: string;
+            id: string;
             image?: string;
           }
         >
@@ -684,11 +684,11 @@ export const httpApi = {
       );
       return raw.map(
         (item): Expense => ({
-          expenseid: item._id,
+          expenseid: item.id,
           gardenid: item.gardenid,
           date: item.date,
           title: item.title,
-          req_id: item.req_id ?? null,
+          reqid: item.reqid ?? null,
           points: item.points || [],
           status: item.status,
           image: item.image
@@ -730,7 +730,7 @@ export const httpApi = {
       const raw = await request<
         Array<
           Omit<Task, "taskid"> & {
-            _id: string;
+            id: string;
           }
         >
       >(
@@ -739,7 +739,7 @@ export const httpApi = {
       );
       return raw.map(
         (item): Task => ({
-          taskid: item._id,
+          taskid: item.id,
           gardenid: item.gardenid,
           title: item.title,
           date: item.date,
@@ -755,6 +755,17 @@ export const httpApi = {
         "/dashboard/summary",
         { method: "GET" }
       );
+    },
+    getExecutive: async (gardenId: string) => {
+      return request<any>("/dashboard/executive", { method: "GET", body: JSON.stringify({ gardenId }) });
     }
+  },
+  boughtLeaf: {
+    getSuppliers: () => request<any>("/stg/supplier", { method: "GET" }),
+    createSupplier: (data: any) => request<any>("/stg/supplier", { method: "POST", body: JSON.stringify(data) }),
+    getPrices: () => request<any>("/stg/price", { method: "GET" }),
+    setPrice: (data: any) => request<any>("/stg/price", { method: "POST", body: JSON.stringify(data) }),
+    createLog: (data: any) => request<any>("/stg/log", { method: "POST", body: JSON.stringify(data) }),
+    getAnalytics: (gardenId: string) => request<any>(`/stg/analytics?gardenId=${gardenId}`, { method: "GET" }),
   }
 };

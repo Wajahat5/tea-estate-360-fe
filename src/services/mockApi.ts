@@ -822,6 +822,21 @@ export const mockApi = {
           totalInProgressTasks
         }
       };
+    },
+    getExecutive: async (gardenId: string) => {
+      await delay(500);
+      return {
+        totalRevenue: 500000,
+        operatingExpenses: 300000,
+        netMargin: "40%"
+      };
     }
+  },
+  boughtLeaf: {
+    getSuppliers: async () => [],
+    createSupplier: async (data: any) => data,
+    getPrices: async () => [],
+    setPrice: async (data: any) => data,
+    createLog: async (data: any) => data,
   }
 };

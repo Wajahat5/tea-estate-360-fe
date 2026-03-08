@@ -21,7 +21,12 @@ const navItems = [
   { to: "/employees", label: "Employees" },
   { to: "/requests", label: "Requests" },
   { to: "/expenses", label: "Expenses" },
-  { to: "/tasks", label: "To-Dos" }
+  { to: "/tasks", label: "To-Dos" },
+  { to: "/settings", label: "Settings" },
+  { to: "/auction", label: "Auction" },
+  { to: "/executive-dashboard", label: "Executive Dash" },
+  { to: "/inventory", label: "Inventory" },
+  { to: "/assets", label: "Assets" }
 ];
 
 export const DashboardLayout = () => {

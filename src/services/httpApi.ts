@@ -202,6 +202,134 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const httpApi = {
+  admin: {
+    setGovtWage: (body: import("../types/api").GovtWageRequest) =>
+      request<void>("/admin/govt-wage", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addHoliday: (body: import("../types/api").HolidayRequest) =>
+      request<void>("/admin/holiday", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    removeHoliday: (date: string) =>
+      request<void>("/admin/holiday", {
+        method: "DELETE",
+        body: JSON.stringify({ date })
+      }),
+  },
+  auction: {
+    factoryOutput: (body: import("../types/api").FactoryOutputRequest) =>
+      request<void>("/factory/output", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addTeaLot: (body: import("../types/api").TeaLotRequest) =>
+      request<void>("/auction/tea-lot", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addResult: (body: import("../types/api").AuctionResultRequest) =>
+      request<void>("/auction/result", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addBuyer: (body: import("../types/api").BuyerRequest) =>
+      request<void>("/auction/buyer", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addPayment: (body: import("../types/api").PaymentRequest) =>
+      request<void>("/auction/payment", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    history: (gardenId: string) =>
+      request<any>(`/auction/history/${encodeURIComponent(gardenId)}`, {
+        method: "GET"
+      }),
+    analytics: (gardenId: string) =>
+      request<any>(`/auction/analytics?gardenId=${encodeURIComponent(gardenId)}`, {
+        method: "GET"
+      }),
+  },
+  weighment: {
+    getEvents: () =>
+      request<any>("/weighing-event", {
+        method: "GET"
+      }),
+  },
+  payroll: {
+    createCycle: (body: import("../types/api").PayrollCycleRequest) =>
+      request<void>("/payroll/cycle", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    lockCycle: (body: import("../types/api").LockPayrollCycleRequest) =>
+      request<void>("/payroll/cycle/lock", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    getPayslips: (cycleId: string) =>
+      request<any>(`/compliance/payslips/${encodeURIComponent(cycleId)}`, {
+        method: "GET"
+      }),
+    getComplianceReport: () =>
+      request<any>("/compliance/report", {
+        method: "GET"
+      }),
+  },
+  inventory: {
+    addItem: (body: import("../types/api").InventoryItemRequest) =>
+      request<void>("/inventory/item", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addVendor: (body: import("../types/api").VendorRequest) =>
+      request<void>("/inventory/vendor", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    purchaseOrder: (body: import("../types/api").PurchaseOrderRequest) =>
+      request<void>("/inventory/purchase-order", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    issue: (body: import("../types/api").InventoryIssueRequest) =>
+      request<void>("/inventory/issue", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    alerts: (gardenId: string) =>
+      request<any>(`/inventory/alerts/${encodeURIComponent(gardenId)}`, {
+        method: "GET"
+      }),
+  },
+  assets: {
+    add: (body: import("../types/api").AssetRequest) =>
+      request<void>("/asset", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    addBreakdown: (body: import("../types/api").AssetBreakdownRequest) =>
+      request<void>("/asset/breakdown", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    resolveBreakdown: (body: import("../types/api").ResolveBreakdownRequest) =>
+      request<void>("/asset/breakdown/resolve", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+  },
+  reports: {
+    costPerKg: (gardenId: string) => request<any>(`/reports/cost-per-kg?gardenId=${encodeURIComponent(gardenId)}`, { method: "GET" }),
+  },
+  analytics: {
+    teaYieldIntelligence: (gardenId: string) => request<any>(`/analytics/tea-yield-intelligence?gardenId=${encodeURIComponent(gardenId)}`, { method: "GET" }),
+  },
+
   user: {
     login: async (body: LoginUserRequest) => {
       const raw = await request<

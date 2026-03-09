@@ -86,6 +86,7 @@ type RequestFormState = {
   model_name: string;
   ids: string;
   points: string;
+  description: string;
 };
 
 type ExpenseFormState = {
@@ -94,6 +95,7 @@ type ExpenseFormState = {
   gardenid: string;
   req_id: string;
   points: string;
+  description: string;
   amount: string;
 };
 
@@ -102,6 +104,7 @@ type TaskFormState = {
   date: string;
   gardenid: string;
   points: string;
+  description: string;
   status: "not_started" | "under_progress" | "completed";
 };
 
@@ -151,7 +154,8 @@ const createInitialRequestState: RequestFormState = {
   gardenid: "",
   model_name: "labourer",
   ids: "",
-  points: ""
+  points: "",
+  description: ""
 };
 
 const createInitialExpenseState: ExpenseFormState = {
@@ -160,6 +164,7 @@ const createInitialExpenseState: ExpenseFormState = {
   gardenid: "",
   req_id: "",
   points: "",
+  description: "",
   amount: ""
 };
 
@@ -168,6 +173,7 @@ const createInitialTaskState: TaskFormState = {
   date: "",
   gardenid: "",
   points: "",
+  description: "",
   status: "not_started"
 };
 
@@ -293,7 +299,8 @@ export const FormModal = ({
         gardenid: request.gardenid || "",
         model_name: request.model_name || "labourer",
         ids: (request.ids || []).join(", "),
-        points: (request.points || []).join(", ")
+        points: (request.points || []).join(", "),
+        description: request.description || (request.points || []).join(", ")
       });
     } else if (type === "expense" && mode === "update" && expense) {
       setExpenseFormData({
@@ -302,6 +309,7 @@ export const FormModal = ({
         gardenid: expense.gardenid || "",
         req_id: expense.req_id || "",
         points: (expense.points || []).join(", "),
+        description: expense.description || (expense.points || []).join(", "),
         amount: expense.amount ? String(expense.amount) : ""
       });
     } else if (type === "task" && mode === "update" && task) {
@@ -310,6 +318,7 @@ export const FormModal = ({
         date: task.date || "",
         gardenid: task.gardenid || "",
         points: (task.points || []).join(", "),
+        description: task.description || (task.points || []).join(", "),
         status: task.status || "not_started"
       });
     } else if (type === "company" && mode === "update" && company) {
@@ -541,7 +550,7 @@ export const FormModal = ({
          }
       } else if (type === "request" && onCreateRequest && onUpdateRequest) {
          const ids = requestFormData.ids.split(",").map(id => id.trim()).filter(id => id.length > 0);
-         const points = requestFormData.points.split(",").map(p => p.trim()).filter(p => p.length > 0);
+         const parsedPoints = requestFormData.description.split("\n").map(p => p.trim()).filter(p => p.length > 0);
          const payload = {
             requestid: request ? request.requestid : "",
             title: requestFormData.title.trim(),
@@ -549,33 +558,36 @@ export const FormModal = ({
             gardenid: requestFormData.gardenid,
             model_name: requestFormData.model_name,
             ids,
-            points,
+            points: parsedPoints,
+            description: requestFormData.description,
             status: request ? request.status : "under_review" as const
          };
          if (mode === "create") await onCreateRequest(payload);
          else await onUpdateRequest(payload, imageFile, removeImage);
       } else if (type === "expense" && onCreateExpense && onUpdateExpense) {
-         const points = expenseFormData.points.split(",").map(p => p.trim()).filter(p => p.length > 0);
+         const parsedPoints = expenseFormData.description.split("\n").map(p => p.trim()).filter(p => p.length > 0);
          const payload = {
             expenseid: expense ? expense.expenseid : "",
             gardenid: expenseFormData.gardenid,
             date: expenseFormData.date,
             title: expenseFormData.title.trim(),
             req_id: expenseFormData.req_id.trim() || null,
-            points,
+            points: parsedPoints,
+            description: expenseFormData.description,
             amount: Number(expenseFormData.amount) || 0,
             status: expense ? expense.status : "unpaid" as const
          };
          if (mode === "create") await onCreateExpense(payload);
          else await onUpdateExpense(payload, imageFile, removeImage);
       } else if (type === "task" && onCreateTask && onUpdateTask) {
-         const points = taskFormData.points.split(",").map(p => p.trim()).filter(p => p.length > 0);
+         const parsedPoints = taskFormData.description.split("\n").map(p => p.trim()).filter(p => p.length > 0);
          if (mode === "create") {
             await onCreateTask({
                 gardenid: taskFormData.gardenid,
                 title: taskFormData.title.trim(),
                 date: taskFormData.date,
-                points,
+                points: parsedPoints,
+                description: taskFormData.description,
                 status: "not_started"
             });
          } else if (task) {
@@ -584,7 +596,8 @@ export const FormModal = ({
                 gardenid: task.gardenid,
                 title: taskFormData.title.trim(),
                 date: taskFormData.date,
-                points,
+                points: parsedPoints,
+                description: taskFormData.description,
                 status: taskFormData.status
             });
          }
@@ -849,8 +862,8 @@ export const FormModal = ({
         <input className="field-input" name="ids" value={requestFormData.ids} onChange={handleRequestChange} />
       </label>
       <label className="field-label">
-        Points
-        <textarea className="field-input" name="points" value={requestFormData.points} onChange={handleRequestChange} required />
+        Description
+        <textarea className="field-input" name="description" value={requestFormData.description} onChange={handleRequestChange} required />
       </label>
       {mode === "update" && renderImageUpload(request?.image)}
     </>
@@ -888,8 +901,8 @@ export const FormModal = ({
         <input className="field-input" type="number" name="amount" value={expenseFormData.amount} onChange={handleExpenseChange} />
       </label>
       <label className="field-label">
-        Points
-        <textarea className="field-input" name="points" value={expenseFormData.points} onChange={handleExpenseChange} required />
+        Description
+        <textarea className="field-input" name="description" value={expenseFormData.description} onChange={handleExpenseChange} required />
       </label>
       {mode === "update" && renderImageUpload(expense?.image)}
     </>
@@ -929,8 +942,8 @@ export const FormModal = ({
         </label>
       )}
       <label className="field-label">
-        Points
-        <textarea className="field-input" name="points" value={taskFormData.points} onChange={handleTaskChange} required />
+        Description
+        <textarea className="field-input" name="description" value={taskFormData.description} onChange={handleTaskChange} required />
       </label>
     </>
   );

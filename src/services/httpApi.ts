@@ -415,7 +415,7 @@ export const httpApi = {
       });
       return raw.map(
         (company): CompanyListItem => ({
-          companyid: company.id,
+          companyid: company.id || (company as any)._id || (company as any).companyid,
           name: company.name,
           state: company.state,
           district: company.district,

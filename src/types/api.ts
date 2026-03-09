@@ -198,12 +198,14 @@ export interface BatchFetchResponse {
 }
 
 export interface AddPaymentRequest {
+  companyid?: string;
   labourerids: string[];
   ymp: string;
   amounts: number[];
 }
 
 export interface FetchPaymentStatusRequest {
+  companyid?: string;
   labourerids: string[];
   ymp: string;
 }

@@ -269,11 +269,16 @@ export const httpApi = {
         throw new Error("Login response did not include an auth token");
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
+      const mappedGardens = ((rawUser as any).gardens || []).map((g: any) => ({
+        gardenid: g.id || g.gardenid,
+        name: g.name || g.id || g.gardenid
+      }));
+
       const user: User = {
         userid: rawUser.id,
         db_role: rawUser.db_role,
-        gardens: (rawUser as any).gardens,
-        gardenid: rawUser.gardenid,
+        gardens: mappedGardens.length > 0 ? mappedGardens : undefined,
+        gardenid: rawUser.gardenid || (rawUser as any).gardenId,
         name: rawUser.name,
         phone: rawUser.phone,
         profession: rawUser.profession,
@@ -304,10 +309,16 @@ export const httpApi = {
         throw new Error("Create user response did not include an auth token");
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
+      const mappedGardens = ((rawUser as any).gardens || []).map((g: any) => ({
+        gardenid: g.id || g.gardenid,
+        name: g.name || g.id || g.gardenid
+      }));
+
       const user: User = {
         userid: rawUser.id,
         db_role: rawUser.db_role,
-        gardenid: rawUser.gardenid,
+        gardens: mappedGardens.length > 0 ? mappedGardens : undefined,
+        gardenid: rawUser.gardenid || (rawUser as any).gardenId,
         name: rawUser.name,
         phone: rawUser.phone,
         profession: rawUser.profession,
@@ -416,12 +427,12 @@ export const httpApi = {
           image: company.image,
           access_requests: company.access_requests,
           gardens: (company.gardens || []).map((garden) => ({
-            gardenid: garden.id,
+            gardenid: garden.id || (garden as any).gardenid,
             name: garden.name,
             state: garden.state,
             district: garden.district,
             pincode: garden.pincode,
-            companyid: garden.companyid
+            companyid: garden.companyid || (garden as any).companyId
           }))
         })
       );

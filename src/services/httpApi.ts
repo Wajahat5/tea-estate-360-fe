@@ -36,7 +36,7 @@ import { setError } from "../store/errorSlice";
 const BASE_URL = config.apiBaseUrl.replace(/\/$/, "");
 
 type RawCompanyGarden = {
-  _id: string;
+  id: string;
   name: string;
   state: string;
   district: string;
@@ -45,7 +45,7 @@ type RawCompanyGarden = {
 };
 
 type RawCompanyListItem = {
-  _id: string;
+  id: string;
   name: string;
   state: string;
   district: string;
@@ -56,12 +56,12 @@ type RawCompanyListItem = {
   email?: string;
   ownerid?: string;
   image?: string;
-  access_requests?: Array<{ _id: string; gardenid: string; userid: string }>;
+  access_requests?: Array<{ id: string; gardenid: string; userid: string }>;
   gardens?: RawCompanyGarden[];
 };
 
 type RawUser = {
-  _id: string;
+  id: string;
   db_role?: string;
   gardenid: string;
   name: string;
@@ -77,14 +77,14 @@ type LoginResponse = {
 };
 
 type RawRequestsFetchItem = {
-  _id: string;
+  id: string;
   points: string[];
   status: "under_review" | "approved";
   gardenid: string;
   title: string;
   date: string;
   labourers?: Array<{
-    _id: string;
+    id: string;
     name: string;
     type?: string;
     married_status?: boolean;
@@ -93,7 +93,7 @@ type RawRequestsFetchItem = {
     image?: string;
   }>;
   employees?: Array<{
-    _id: string;
+    id: string;
     name: string;
     profession?: string;
     image?: string;
@@ -125,7 +125,7 @@ function buildQuery(
 }
 
 type RawEmployee = {
-  _id: string;
+  id: string;
   gardenid?: string;
   name: string;
   profession: string;
@@ -134,7 +134,7 @@ type RawEmployee = {
 };
 
 type RawLabourer = {
-  _id?: string;
+  id?: string;
   labourerid?: string;
   name: string;
   type: "permanent" | "casual" | "temporary";
@@ -202,6 +202,54 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const httpApi = {
+  admin: {
+    setGovtWage: (body: import("../types/api").GovtWageRequest) => request<void>("/admin/govt-wage", { method: "POST", body: JSON.stringify(body) }),
+    addHoliday: (body: import("../types/api").HolidayRequest) => request<void>("/admin/holiday", { method: "POST", body: JSON.stringify(body) }),
+    removeHoliday: (date: string) => request<void>("/admin/holiday", { method: "DELETE", body: JSON.stringify({ date }) }),
+  },
+  auction: {
+    factoryOutput: (body: import("../types/api").FactoryOutputRequest) => request<void>("/factory/output", { method: "POST", body: JSON.stringify(body) }),
+    addTeaLot: (body: import("../types/api").TeaLotRequest) => request<void>("/auction/tea-lot", { method: "POST", body: JSON.stringify(body) }),
+    addResult: (body: import("../types/api").AuctionResultRequest) => request<void>("/auction/result", { method: "POST", body: JSON.stringify(body) }),
+    addBuyer: (body: import("../types/api").BuyerRequest) => request<void>("/auction/buyer", { method: "POST", body: JSON.stringify(body) }),
+    addPayment: (body: import("../types/api").PaymentRequest) => request<void>("/auction/payment", { method: "POST", body: JSON.stringify(body) }),
+    history: (gardenId: string) => request<any>(`/auction/history/${encodeURIComponent(gardenId)}`, { method: "GET" }),
+    analytics: (gardenId: string) => request<any>(`/auction/analytics?gardenId=${encodeURIComponent(gardenId)}`, { method: "GET" }),
+  },
+  weighment: {
+    getEvents: () => request<any>("/weighing-event", { method: "GET" }),
+  },
+  payroll: {
+    createCycle: (body: import("../types/api").PayrollCycleRequest) => request<void>("/payroll/cycle", { method: "POST", body: JSON.stringify(body) }),
+    lockCycle: (body: import("../types/api").LockPayrollCycleRequest) => request<void>("/payroll/cycle/lock", { method: "POST", body: JSON.stringify(body) }),
+    getPayslips: (cycleId: string) => request<any>(`/compliance/payslips/${encodeURIComponent(cycleId)}`, { method: "GET" }),
+    getComplianceReport: () => request<any>("/compliance/report", { method: "GET" }),
+  },
+  inventory: {
+    addItem: (body: import("../types/api").InventoryItemRequest) => request<void>("/inventory/item", { method: "POST", body: JSON.stringify(body) }),
+    addVendor: (body: import("../types/api").VendorRequest) => request<void>("/inventory/vendor", { method: "POST", body: JSON.stringify(body) }),
+    purchaseOrder: (body: import("../types/api").PurchaseOrderRequest) => request<void>("/inventory/purchase-order", { method: "POST", body: JSON.stringify(body) }),
+    issue: (body: import("../types/api").InventoryIssueRequest) => request<void>("/inventory/issue", { method: "POST", body: JSON.stringify(body) }),
+    alerts: (gardenId: string) => request<any>(`/inventory/alerts/${encodeURIComponent(gardenId)}`, { method: "GET" }),
+  },
+  assets: {
+    add: (body: import("../types/api").AssetRequest) => request<void>("/asset", { method: "POST", body: JSON.stringify(body) }),
+    addBreakdown: (body: import("../types/api").AssetBreakdownRequest) => request<void>("/asset/breakdown", { method: "POST", body: JSON.stringify(body) }),
+    resolveBreakdown: (body: import("../types/api").ResolveBreakdownRequest) => request<void>("/asset/breakdown/resolve", { method: "POST", body: JSON.stringify(body) }),
+  },
+  reports: {
+    costPerKg: (gardenId: string) => request<any>(`/reports/cost-per-kg?gardenId=${encodeURIComponent(gardenId)}`, { method: "GET" }),
+  },
+  analytics: {
+    teaYieldIntelligence: (gardenId: string) => request<any>(`/analytics/tea-yield-intelligence?gardenId=${encodeURIComponent(gardenId)}`, { method: "GET" }),
+  },
+  stg: {
+    addSupplier: (body: import("../types/api").BoughtLeafSupplier) => request<any>("/stg/supplier", { method: "POST", body: JSON.stringify(body) }),
+    setPrice: (body: import("../types/api").BoughtLeafPrice) => request<any>("/stg/price", { method: "POST", body: JSON.stringify(body) }),
+    addLog: (body: import("../types/api").BoughtLeafLog) => request<any>("/stg/log", { method: "POST", body: JSON.stringify(body) }),
+    getAnalytics: (gardenId: string) => request<import("../types/api").BoughtLeafAnalytics>(`/stg/analytics?gardenId=${encodeURIComponent(gardenId)}`, { method: "GET" })
+  },
+
   user: {
     login: async (body: LoginUserRequest) => {
       const raw = await request<
@@ -222,8 +270,9 @@ export const httpApi = {
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
       const user: User = {
-        userid: rawUser._id,
+        userid: rawUser.id,
         db_role: rawUser.db_role,
+        gardens: (rawUser as any).gardens,
         gardenid: rawUser.gardenid,
         name: rawUser.name,
         phone: rawUser.phone,
@@ -256,7 +305,7 @@ export const httpApi = {
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
       const user: User = {
-        userid: rawUser._id,
+        userid: rawUser.id,
         db_role: rawUser.db_role,
         gardenid: rawUser.gardenid,
         name: rawUser.name,
@@ -276,7 +325,7 @@ export const httpApi = {
         method: "POST",
         body: JSON.stringify(body)
       }),
-    update: (body: UpdateUserRequest) =>
+    update: (body: any) =>
       request<User>("/user/update", {
         method: "PATCH",
         body: JSON.stringify(body)
@@ -354,7 +403,7 @@ export const httpApi = {
       });
       return raw.map(
         (company): CompanyListItem => ({
-          companyid: company._id,
+          companyid: company.id,
           name: company.name,
           state: company.state,
           district: company.district,
@@ -367,7 +416,7 @@ export const httpApi = {
           image: company.image,
           access_requests: company.access_requests,
           gardens: (company.gardens || []).map((garden) => ({
-            gardenid: garden._id,
+            gardenid: garden.id,
             name: garden.name,
             state: garden.state,
             district: garden.district,
@@ -401,7 +450,7 @@ export const httpApi = {
       });
       return raw.map(
         (item): Labourer => ({
-          labourerid: item.labourerid || item._id || "",
+          labourerid: item.labourerid || item.id || "",
           name: item.name,
           type: item.type,
           gardenid: item.gardenid,
@@ -473,7 +522,7 @@ export const httpApi = {
       return raw
         .map(
           (employee): Employee => ({
-            employeeid: employee._id,
+            employeeid: employee.id,
             gardenid: employee.gardenid,
             name: employee.name,
             profession: employee.profession,
@@ -568,7 +617,7 @@ export const httpApi = {
       );
       return raw.map(
         (item): RequestsFetchItem => ({
-          _id: item._id,
+          id: item.id,
           points: item.points || [],
           status: item.status,
           gardenid: item.gardenid,
@@ -625,7 +674,7 @@ export const httpApi = {
       const raw = await request<
         Array<
           Omit<Expense, "expenseid"> & {
-            _id: string;
+            id: string;
             image?: string;
           }
         >
@@ -635,11 +684,11 @@ export const httpApi = {
       );
       return raw.map(
         (item): Expense => ({
-          expenseid: item._id,
+          expenseid: item.id,
           gardenid: item.gardenid,
           date: item.date,
           title: item.title,
-          req_id: item.req_id ?? null,
+          reqid: item.reqid ?? null,
           points: item.points || [],
           status: item.status,
           image: item.image
@@ -681,7 +730,7 @@ export const httpApi = {
       const raw = await request<
         Array<
           Omit<Task, "taskid"> & {
-            _id: string;
+            id: string;
           }
         >
       >(
@@ -690,7 +739,7 @@ export const httpApi = {
       );
       return raw.map(
         (item): Task => ({
-          taskid: item._id,
+          taskid: item.id,
           gardenid: item.gardenid,
           title: item.title,
           date: item.date,
@@ -706,6 +755,17 @@ export const httpApi = {
         "/dashboard/summary",
         { method: "GET" }
       );
+    },
+    getExecutive: async (gardenId: string) => {
+      return request<any>("/dashboard/executive", { method: "GET", body: JSON.stringify({ gardenId }) });
     }
+  },
+  boughtLeaf: {
+    getSuppliers: () => request<any>("/stg/supplier", { method: "GET" }),
+    createSupplier: (data: any) => request<any>("/stg/supplier", { method: "POST", body: JSON.stringify(data) }),
+    getPrices: () => request<any>("/stg/price", { method: "GET" }),
+    setPrice: (data: any) => request<any>("/stg/price", { method: "POST", body: JSON.stringify(data) }),
+    createLog: (data: any) => request<any>("/stg/log", { method: "POST", body: JSON.stringify(data) }),
+    getAnalytics: (gardenId: string) => request<any>(`/stg/analytics?gardenId=${gardenId}`, { method: "GET" }),
   }
 };

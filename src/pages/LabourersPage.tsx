@@ -237,7 +237,7 @@ export const LabourersPage = () => {
   };
 
   const getCompanyIdByGardenId = (gid: string) => {
-    return gardens.find(g => g.gardenid === gid)?.companyid || companies[0]?.companyid || "";
+    return companies[0]?.companyid || ""; // The actual garden -> company mapping logic can be handled centrally. Gardens associated with user usually don't have companyid directly in `user.gardens` array.
   };
 
   const handleFetchPayroll = async () => {

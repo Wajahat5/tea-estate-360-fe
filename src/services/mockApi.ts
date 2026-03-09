@@ -1,3 +1,4 @@
+declare const require: any;
 import type {
   AddAttendanceRequest,
   AddPaymentRequest,
@@ -172,6 +173,63 @@ let tasks: Task[] = [
 const currentUser = () => users[0] as User;
 
 export const mockApi = {
+  admin: {
+    setGovtWage: async (body: import("../types/api").GovtWageRequest) => { await delay(300); },
+    addHoliday: async (body: import("../types/api").HolidayRequest) => { await delay(300); },
+    removeHoliday: async (date: string) => { await delay(300); },
+  },
+  auction: {
+    factoryOutput: async (body: import("../types/api").FactoryOutputRequest) => { await delay(300); },
+    addTeaLot: async (body: import("../types/api").TeaLotRequest) => { await delay(300); },
+    addResult: async (body: import("../types/api").AuctionResultRequest) => { await delay(300); },
+    addBuyer: async (body: import("../types/api").BuyerRequest) => { await delay(300); },
+    addPayment: async (body: import("../types/api").PaymentRequest) => { await delay(300); },
+    history: async (gardenId: string) => { await delay(300); return []; },
+    analytics: async (gardenId: string) => { await delay(300); return {}; },
+  },
+  weighment: {
+    getEvents: async () => { await delay(300); return []; },
+  },
+  payroll: {
+    createCycle: async (body: import("../types/api").PayrollCycleRequest) => { await delay(300); },
+    lockCycle: async (body: import("../types/api").LockPayrollCycleRequest) => { await delay(300); },
+    getPayslips: async (cycleId: string) => { await delay(300); return []; },
+    getComplianceReport: async () => { await delay(300); return {}; },
+  },
+  inventory: {
+    addItem: async (body: import("../types/api").InventoryItemRequest) => { await delay(300); },
+    addVendor: async (body: import("../types/api").VendorRequest) => { await delay(300); },
+    purchaseOrder: async (body: import("../types/api").PurchaseOrderRequest) => { await delay(300); },
+    issue: async (body: import("../types/api").InventoryIssueRequest) => { await delay(300); },
+    alerts: async (gardenId: string) => { await delay(300); return []; },
+  },
+  assets: {
+    add: async (body: import("../types/api").AssetRequest) => { await delay(300); },
+    addBreakdown: async (body: import("../types/api").AssetBreakdownRequest) => { await delay(300); },
+    resolveBreakdown: async (body: import("../types/api").ResolveBreakdownRequest) => { await delay(300); },
+  },
+  reports: {
+    costPerKg: async (gardenId: string) => { await delay(300); return {}; },
+  },
+  analytics: {
+    teaYieldIntelligence: async (gardenId: string) => { await delay(300); return {}; },
+  },
+  stg: {
+    addSupplier: async (body: import("../types/api").BoughtLeafSupplier) => { await delay(300); return { ...body, id: "sup-" + Math.random() }; },
+    setPrice: async (body: import("../types/api").BoughtLeafPrice) => { await delay(300); return { ...body, id: "prc-" + Math.random() }; },
+    addLog: async (body: import("../types/api").BoughtLeafLog) => { await delay(300); return { success: true, message: "Logged" }; },
+    getAnalytics: async (gardenId: string) => {
+      await delay(300);
+      return {
+        totalBoughtWeight: 5000,
+        totalBoughtCost: 125000,
+        averageBoughtCostPerKg: 25,
+        supplierRanking: [{ name: "Ram Singh STG", totalSuppliedKg: 5000, averageQualityScore: "8.50" }],
+        factoryContext: { totalInternalLeafInput: 15000, totalBoughtLeafInputProcessed: 5000, overallConversionRatio: "0.2200" }
+      };
+    }
+  },
+
   user: {
     async login(payload: LoginUserRequest): Promise<{ user: User; token: string }> {
       await delay(400);
@@ -284,9 +342,9 @@ export const mockApi = {
     async processRequest(payload: import("../types/api").ProcessJoinRequest): Promise<void> {
       await delay(200);
       const company = companies.find(c => c.companyid === payload.companyid);
-      if (company && company.access_requests) {
-         company.access_requests = company.access_requests.filter(
-             r => !(r.userid === payload.userid && r.gardenid === payload.gardenid)
+      if (company && (company as any).access_requests) {
+         (company as any).access_requests = (company as any).access_requests.filter(
+             (r: any) => !(r.userid === payload.userid && r.gardenid === payload.gardenid)
          );
       }
     },
@@ -351,7 +409,7 @@ export const mockApi = {
 
       return companies.map((company) => {
         // Mock some access requests for testing UI
-        const access_requests = company.access_requests || [];
+        const access_requests = (company as any).access_requests || [];
         if (company.companyid === "6011c7b575326918c46a817f" && access_requests.length === 0) {
             access_requests.push({
                 _id: "req1",
@@ -476,7 +534,7 @@ export const mockApi = {
     },
     async batchFetch(payload: import("../types/api").BatchFetchRequest): Promise<any> {
       await delay(200);
-      return { data: payload.labourers?.map((id) => ({
+      return { data: payload.labourerids?.map((id: any) => ({
         labourerid: id,
         attendance: [],
         total_earned: Math.floor(Math.random() * 5000),
@@ -554,7 +612,7 @@ export const mockApi = {
     async update(payload: MaintenanceRequest): Promise<MaintenanceRequest> {
       await delay(300);
       const index = requests.findIndex(
-        (r) => r.requestid === payload.requestid
+        (r: any) => r.requestid === payload.requestid
       );
       if (index === -1) {
         throw new Error("Request not found");
@@ -564,7 +622,7 @@ export const mockApi = {
     },
     async delete(requestid: string): Promise<void> {
       await delay(200);
-      requests = requests.filter((r) => r.requestid !== requestid);
+      requests = requests.filter((r: any) => r.requestid !== requestid);
     },
     async listByFilters(
       gardenid: string,
@@ -611,18 +669,18 @@ export const mockApi = {
       status: RequestStatus
     ): Promise<void> {
       await delay(200);
-      requests = requests.map((r) =>
+      requests = requests.map((r: any) =>
         ids.includes(r.requestid) ? { ...r, status } : r
       );
     },
     async uploadImage(requestid: string, _file: File): Promise<void> {
       await delay(300);
-      const request = requests.find((r) => r.requestid === requestid);
+      const request = requests.find((r: any) => r.requestid === requestid);
       if (!request) throw new Error("Request not found");
     },
     async removeImage(requestid: string): Promise<void> {
       await delay(300);
-      const request = requests.find((r) => r.requestid === requestid);
+      const request = requests.find((r: any) => r.requestid === requestid);
       if (!request) throw new Error("Request not found");
     }
   },
@@ -764,6 +822,21 @@ export const mockApi = {
           totalInProgressTasks
         }
       };
+    },
+    getExecutive: async (gardenId: string) => {
+      await delay(500);
+      return {
+        totalRevenue: 500000,
+        operatingExpenses: 300000,
+        netMargin: "40%"
+      };
     }
+  },
+  boughtLeaf: {
+    getSuppliers: async () => [],
+    createSupplier: async (data: any) => data,
+    getPrices: async () => [],
+    setPrice: async (data: any) => data,
+    createLog: async (data: any) => data,
   }
 };

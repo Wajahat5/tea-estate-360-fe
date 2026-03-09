@@ -435,9 +435,9 @@ export const FormModal = ({
               if (govtData) {
                 setCompanyFormData((prev) => ({
                   ...prev,
-                  labourer_daily_wage: govtData.labourer_daily_wage,
-                  labourer_extrawage_per_kg: govtData.labourer_extrawage_kg,
-                  labourer_extrawage_per_hr: govtData.labourer_extrawage_hr,
+                  labourer_daily_wage: String(govtData.labourer_daily_wage),
+                  labourer_extrawage_per_kg: String(govtData.labourer_extrawage_kg),
+                  labourer_extrawage_per_hr: String(govtData.labourer_extrawage_hr),
                 }));
               }
               setFlowStep("company");

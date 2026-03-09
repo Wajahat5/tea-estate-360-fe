@@ -12,6 +12,12 @@ import { TasksPage } from "./pages/TasksPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { GardensPage } from "./pages/GardensPage";
 import { EmployeesPage } from "./pages/EmployeesPage";
+import { BoughtLeafPage } from "./pages/BoughtLeafPage";
+import { ExecutiveDashboardPage } from "./pages/ExecutiveDashboardPage";
+import { AuctionPage } from "./pages/AuctionPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { InventoryPage } from "./pages/InventoryPage";
+import { AssetsPage } from "./pages/AssetsPage";
 
 export const App = () => {
   return (
@@ -32,6 +38,12 @@ export const App = () => {
         <Route path="/requests" element={<RequestsPage />} />
         <Route path="/expenses" element={<ExpensesPage />} />
         <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/bought-leaf" element={<BoughtLeafPage />} />
+        <Route path="/executive-dashboard" element={<ExecutiveDashboardPage />} />
+        <Route path="/auction" element={<AuctionPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/inventory" element={<InventoryPage />} />
+        <Route path="/assets" element={<AssetsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

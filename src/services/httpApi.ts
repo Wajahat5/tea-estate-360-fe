@@ -282,7 +282,7 @@ export const httpApi = {
         gardenid: rawUser.gardenid || (rawUser as any).gardenId,
         name: rawUser.name,
         phone: rawUser.phone,
-        profession: rawUser.profession,
+        profession: rawUser.profession ? rawUser.profession.toLowerCase() : "",
         email: rawUser.email,
         image: rawUser.image
       };
@@ -322,7 +322,7 @@ export const httpApi = {
         gardenid: rawUser.gardenid || (rawUser as any).gardenId,
         name: rawUser.name,
         phone: rawUser.phone,
-        profession: rawUser.profession,
+        profession: rawUser.profession ? rawUser.profession.toLowerCase() : "",
         email: rawUser.email,
         image: rawUser.image
       };

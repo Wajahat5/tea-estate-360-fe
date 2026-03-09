@@ -135,6 +135,7 @@ type RawEmployee = {
 
 type RawLabourer = {
   id?: string;
+  _id?: string;
   labourerid?: string;
   name: string;
   type: "permanent" | "casual" | "temporary";
@@ -461,7 +462,7 @@ export const httpApi = {
       });
       return raw.map(
         (item): Labourer => ({
-          labourerid: item.labourerid || item.id || "",
+          labourerid: item.labourerid || item.id || item._id || "",
           name: item.name,
           type: item.type,
           gardenid: item.gardenid,

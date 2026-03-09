@@ -491,7 +491,7 @@ export const FormModal = ({
       } else if (type === "garden") {
         if (!onCreateGarden || !onUpdateGarden) return;
         const payload = {
-          gardenid: gardenData ? gardenData.gardenid : "",
+          gardenid: gardenData ? gardenData.gardenid : undefined,
           companyid: companyIdForGarden || "",
           name: gardenFormData.name,
           state: gardenFormData.state,
@@ -500,9 +500,9 @@ export const FormModal = ({
         };
 
         if (mode === "create") {
-          await onCreateGarden(payload);
+          await onCreateGarden(payload as CreateGardenRequest);
         } else {
-          await onUpdateGarden(payload);
+          await onUpdateGarden(payload as UpdateGardenRequest);
         }
       } else if (type === "user") {
         if (!onUpdateUser || !user) return;

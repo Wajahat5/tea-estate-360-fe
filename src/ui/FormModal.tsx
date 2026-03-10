@@ -85,7 +85,6 @@ type RequestFormState = {
   gardenid: string;
   model_name: string;
   ids: string;
-  points: string;
   description: string;
 };
 
@@ -94,7 +93,6 @@ type ExpenseFormState = {
   date: string;
   gardenid: string;
   req_id: string;
-  points: string;
   description: string;
   amount: string;
 };
@@ -103,7 +101,6 @@ type TaskFormState = {
   title: string;
   date: string;
   gardenid: string;
-  points: string;
   description: string;
   status: "not_started" | "under_progress" | "completed";
 };
@@ -154,7 +151,6 @@ const createInitialRequestState: RequestFormState = {
   gardenid: "",
   model_name: "labourer",
   ids: "",
-  points: "",
   description: ""
 };
 
@@ -163,7 +159,6 @@ const createInitialExpenseState: ExpenseFormState = {
   date: "",
   gardenid: "",
   req_id: "",
-  points: "",
   description: "",
   amount: ""
 };
@@ -172,7 +167,6 @@ const createInitialTaskState: TaskFormState = {
   title: "",
   date: "",
   gardenid: "",
-  points: "",
   description: "",
   status: "not_started"
 };
@@ -299,7 +293,6 @@ export const FormModal = ({
         gardenid: request.gardenid || "",
         model_name: request.model_name || "labourer",
         ids: (request.ids || []).join(", "),
-        points: (request.points || []).join(", "),
         description: request.description || (request.points || []).join(", ")
       });
     } else if (type === "expense" && mode === "update" && expense) {
@@ -308,7 +301,6 @@ export const FormModal = ({
         date: expense.date || "",
         gardenid: expense.gardenid || "",
         req_id: expense.req_id || "",
-        points: (expense.points || []).join(", "),
         description: expense.description || (expense.points || []).join(", "),
         amount: expense.amount ? String(expense.amount) : ""
       });
@@ -317,7 +309,6 @@ export const FormModal = ({
         title: task.title || "",
         date: task.date || "",
         gardenid: task.gardenid || "",
-        points: (task.points || []).join(", "),
         description: task.description || (task.points || []).join(", "),
         status: task.status || "not_started"
       });
@@ -558,7 +549,6 @@ export const FormModal = ({
             gardenid: requestFormData.gardenid,
             model_name: requestFormData.model_name,
             ids,
-            points: parsedPoints,
             description: requestFormData.description,
             status: request ? request.status : "under_review" as const
          };
@@ -572,7 +562,6 @@ export const FormModal = ({
             date: expenseFormData.date,
             title: expenseFormData.title.trim(),
             req_id: expenseFormData.req_id.trim() || null,
-            points: parsedPoints,
             description: expenseFormData.description,
             amount: Number(expenseFormData.amount) || 0,
             status: expense ? expense.status : "unpaid" as const
@@ -586,7 +575,6 @@ export const FormModal = ({
                 gardenid: taskFormData.gardenid,
                 title: taskFormData.title.trim(),
                 date: taskFormData.date,
-                points: parsedPoints,
                 description: taskFormData.description,
                 status: "not_started"
             });
@@ -596,7 +584,6 @@ export const FormModal = ({
                 gardenid: task.gardenid,
                 title: taskFormData.title.trim(),
                 date: taskFormData.date,
-                points: parsedPoints,
                 description: taskFormData.description,
                 status: taskFormData.status
             });

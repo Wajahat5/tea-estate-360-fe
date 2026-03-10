@@ -11,7 +11,7 @@ export const OnboardingPage = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const [mode, setMode] = useState<"create_company_email" | "create_company_otp" | "create_company_details" | "create_garden" | "join_garden">(
-    user?.profession === 'owner' ? "create_company_email" : "join_garden"
+    user?.profession?.toLowerCase() === 'owner' ? "create_company_email" : "join_garden"
   );
 
   const [email, setEmail] = useState("");

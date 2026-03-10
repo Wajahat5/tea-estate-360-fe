@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { useAppDispatch } from "../store/hooks";
+import { setError } from "../store/errorSlice";
+
 import { apiService } from "../services/apiService";
 
 export const SettingsPage = () => {
+  const dispatch = useAppDispatch();
+  const [successMsg, setSuccessMsg] = useState("");
   const [wageForm, setWageForm] = useState({ year: new Date().getFullYear(), dailyWage: "", extraWageKg: "", extraWageHr: "" });
   const [holidayForm, setHolidayForm] = useState({ date: "", description: "" });
 
@@ -9,9 +14,10 @@ export const SettingsPage = () => {
     e.preventDefault();
     try {
       await apiService.admin.setGovtWage(wageForm);
-      alert("Wages Updated");
+      setSuccessMsg("Wages Updated");
+      setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      alert("Error updating wages");
+      dispatch(setError("Error updating wages"));
     }
   };
 
@@ -19,14 +25,21 @@ export const SettingsPage = () => {
     e.preventDefault();
     try {
       await apiService.admin.addHoliday(holidayForm);
-      alert("Holiday Added");
+      setSuccessMsg("Holiday Added");
+      setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      alert("Error adding holiday");
+      dispatch(setError("Error adding holiday"));
     }
   };
 
   return (
     <div className="page-container">
+      {successMsg && (
+        <div className="success-banner">
+
+          <span className="block sm:inline">{successMsg}</span>
+        </div>
+      )}
       <header className="page-header">
         <h1 className="page-title">Admin Settings</h1>
         <p className="page-subtitle">Configure organization parameters and holidays.</p>

@@ -1,28 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppDispatch } from "../store/hooks";
+import { useOwnedGardens } from "../hooks/useOwnedGardens";
 import { apiService } from "../services/apiService";
 import { setError } from "../store/errorSlice";
 import type { BoughtLeafSupplier, BoughtLeafPrice, BoughtLeafLog, BoughtLeafAnalytics } from "../types/api";
 
 export const BoughtLeafPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.auth.user);
-  const companies = useAppSelector((state) => state.companies.items);
 
-  const gardens = user?.gardens && user.gardens.length > 0
-    ? user.gardens.map(g => ({ gardenid: g.gardenid, name: (g as any).name || g.gardenid }))
-    : companies
-      .filter((company) => company.ownerid === user?.userid)
-      .flatMap((company) => company.gardens);
-
-  const uniqueGardens = new Map<string, { gardenid: string; name: string }>();
-  gardens.forEach((garden) => {
-      uniqueGardens.set(garden.gardenid, {
-        gardenid: garden.gardenid,
-        name: garden.name
-      });
-  });
-  const gardenOptions = Array.from(uniqueGardens.values());
+  const gardenOptions = useOwnedGardens();
 
   const [activeTab, setActiveTab] = useState("supplier");
   const [selectedGardenId, setSelectedGardenId] = useState("");
@@ -108,17 +94,17 @@ export const BoughtLeafPage: React.FC = () => {
   };
 
   const MultiSelectGardens = ({ state, setter }: { state: any, setter: any }) => (
-    <div style={{ marginBottom: "1rem" }}>
-      <label className="field-label">Assign to Gardens (Multi-Select):</label>
-      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", padding: "10px", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}>
+    <div className="mb-4 col-span-2">
+      <label className="field-label block mb-2">Assign to Gardens (Multi-Select):</label>
+      <div className="flex gap-2 flex-wrap p-2 border border-[var(--border)] rounded-[var(--radius-md)] bg-white">
       {gardenOptions.map(g => (
-        <label key={g.gardenid} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+        <label key={g.gardenid} className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={state.gardenIds.includes(g.gardenid)}
             onChange={() => handleGardenToggle(setter, state, g.gardenid)}
           />
-          {g.name}
+          <span className="text-sm">{g.name}</span>
         </label>
       ))}
       </div>
@@ -127,26 +113,26 @@ export const BoughtLeafPage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <div className="page-header">
+      <header className="page-header">
         <h1 className="page-title">Bought Leaf (STG) Module</h1>
+        <p className="page-subtitle">Manage suppliers, pricing, and daily leaf deliveries.</p>
+      </header>
+
+      <div className="panel-tabs">
+        <button className={`tab-button ${activeTab === 'supplier' ? 'active' : ''}`} onClick={() => setActiveTab('supplier')}>Suppliers</button>
+        <button className={`tab-button ${activeTab === 'price' ? 'active' : ''}`} onClick={() => setActiveTab('price')}>Rate Cards</button>
+        <button className={`tab-button ${activeTab === 'log' ? 'active' : ''}`} onClick={() => setActiveTab('log')}>Daily Logging</button>
+        <button className={`tab-button ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>Analytics</button>
       </div>
 
-      <div className="panel-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', width: '100%' }}>
-          <button className={`tab-btn ${activeTab === "supplier" ? "active" : ""}`} onClick={() => setActiveTab("supplier")}>Suppliers</button>
-          <button className={`tab-btn ${activeTab === "price" ? "active" : ""}`} onClick={() => setActiveTab("price")}>Rate Cards</button>
-          <button className={`tab-btn ${activeTab === "log" ? "active" : ""}`} onClick={() => setActiveTab("log")}>Daily Logging</button>
-          <button className={`tab-btn ${activeTab === "analytics" ? "active" : ""}`} onClick={() => setActiveTab("analytics")}>Analytics</button>
-        </div>
-      </div>
-
-      <div className="panel" style={{ marginTop: '1rem' }}>
+      <div className="panel mb-6">
         <div className="panel-body">
           {activeTab === "supplier" && (
             <div>
-              <h2 className="panel-title" style={{marginBottom: '1rem'}}>Suppliers Directory</h2>
-
-              <div className="table-responsive" style={{ marginBottom: '2rem' }}>
+              <div className="panel-header mb-4">
+                <h2 className="panel-title">Suppliers Directory</h2>
+              </div>
+              <div className="table-responsive mb-8">
                 <table className="table">
                   <thead>
                     <tr>
@@ -157,16 +143,16 @@ export const BoughtLeafPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {suppliers.length === 0 && <tr><td colSpan={4} style={{textAlign: 'center'}}>No suppliers found.</td></tr>}
-                    {suppliers.map((s, idx) => (
-                      <tr key={idx}>
+                    {suppliers.length === 0 && <tr><td colSpan={4} className="text-center p-4 text-[var(--text-secondary)]">No suppliers found.</td></tr>}
+                    {suppliers.map(s => (
+                      <tr key={s.supplierCode}>
                         <td>{s.supplierCode}</td>
                         <td>{s.name}</td>
                         <td>{s.phone}</td>
                         <td>
                           {s.gardenIds.map(gid => {
                              const gname = gardenOptions.find(g => g.gardenid === gid)?.name || gid;
-                             return <span key={gid} className="badge" style={{marginRight: '4px', background: '#e0e0e0', color: '#333', padding: '2px 6px', borderRadius: '4px', fontSize: '12px'}}>{gname}</span>;
+                             return <span key={gid} className="badge bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs mr-1">{gname}</span>;
                           })}
                         </td>
                       </tr>
@@ -175,91 +161,61 @@ export const BoughtLeafPage: React.FC = () => {
                 </table>
               </div>
 
-              <h2 className="panel-title" style={{marginBottom: '1rem'}}>Add External Supplier</h2>
-              <form onSubmit={handleSupplierSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="field-group">
-                    <label className="field-label">Supplier Name</label>
-                    <input type="text" className="field-input" value={supplier.name} onChange={(e) => setSupplier({...supplier, name: e.target.value})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Supplier Code (Unique)</label>
-                    <input type="text" className="field-input" value={supplier.supplierCode} onChange={(e) => setSupplier({...supplier, supplierCode: e.target.value})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Phone</label>
-                    <input type="text" className="field-input" value={supplier.phone} onChange={(e) => setSupplier({...supplier, phone: e.target.value})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Address</label>
-                    <input type="text" className="field-input" value={supplier.address} onChange={(e) => setSupplier({...supplier, address: e.target.value})} required />
-                  </div>
-                </div>
+              <div className="panel-header mb-4">
+                <h2 className="panel-title">Add External Supplier</h2>
+              </div>
+              <form onSubmit={handleSupplierSubmit} className="grid grid-cols-2 gap-4">
+                <input type="text" className="field-input" placeholder="Supplier Name" value={supplier.name} onChange={(e) => setSupplier({...supplier, name: e.target.value})} required />
+                <input type="text" className="field-input" placeholder="Supplier Code (Unique)" value={supplier.supplierCode} onChange={(e) => setSupplier({...supplier, supplierCode: e.target.value})} required />
+                <input type="text" className="field-input" placeholder="Phone" value={supplier.phone} onChange={(e) => setSupplier({...supplier, phone: e.target.value})} required />
+                <input type="text" className="field-input" placeholder="Address" value={supplier.address} onChange={(e) => setSupplier({...supplier, address: e.target.value})} required />
                 <MultiSelectGardens state={supplier} setter={setSupplier} />
-                <button type="submit" className="button button-primary" disabled={isSubmitting}>Save Supplier</button>
+                <div className="col-span-2 flex justify-end">
+                  <button type="submit" className="primary-button" disabled={isSubmitting}>Save Supplier</button>
+                </div>
               </form>
             </div>
           )}
 
           {activeTab === "price" && (
             <div>
-              <h2 className="panel-title" style={{marginBottom: '1rem'}}>Set Bought Leaf Price (Rate Card)</h2>
-              <form onSubmit={handlePriceSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="field-group">
-                    <label className="field-label">Effective Date</label>
-                    <input type="date" className="field-input" value={price.effectiveDate} onChange={(e) => setPrice({...price, effectiveDate: e.target.value})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Price Per Kg (₹)</label>
-                    <input type="number" step="0.01" className="field-input" value={price.pricePerKg} onChange={(e) => setPrice({...price, pricePerKg: Number(e.target.value)})} required />
-                  </div>
-                </div>
+              <div className="panel-header mb-4">
+                <h2 className="panel-title">Set Bought Leaf Price (Rate Card)</h2>
+              </div>
+              <form onSubmit={handlePriceSubmit} className="grid grid-cols-2 gap-4">
+                <input type="date" className="field-input" placeholder="Effective Date" value={price.effectiveDate} onChange={(e) => setPrice({...price, effectiveDate: e.target.value})} required />
+                <input type="number" step="0.01" className="field-input" placeholder="Price Per Kg (₹)" value={price.pricePerKg} onChange={(e) => setPrice({...price, pricePerKg: Number(e.target.value)})} required />
                 <MultiSelectGardens state={price} setter={setPrice} />
-                <button type="submit" className="button button-primary" disabled={isSubmitting}>Set Price</button>
+                <div className="col-span-2 flex justify-end">
+                  <button type="submit" className="primary-button" disabled={isSubmitting}>Set Price</button>
+                </div>
               </form>
             </div>
           )}
 
           {activeTab === "log" && (
             <div>
-              <h2 className="panel-title" style={{marginBottom: '1rem'}}>Record Daily Delivery Log</h2>
-              <form onSubmit={handleLogSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="field-group">
-                    <label className="field-label">Supplier ID</label>
-                    <input type="text" className="field-input" value={log.supplierId} onChange={(e) => setLog({...log, supplierId: e.target.value})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Date</label>
-                    <input type="datetime-local" className="field-input" value={log.date} onChange={(e) => setLog({...log, date: e.target.value})} />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Vehicle Number</label>
-                    <input type="text" className="field-input" value={log.vehicleNo} onChange={(e) => setLog({...log, vehicleNo: e.target.value})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Gross Weight (Kg)</label>
-                    <input type="number" className="field-input" value={log.grossWeight} onChange={(e) => setLog({...log, grossWeight: Number(e.target.value)})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Deduction Weight (Kg)</label>
-                    <input type="number" className="field-input" value={log.deductionWeight} onChange={(e) => setLog({...log, deductionWeight: Number(e.target.value)})} required />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label">Quality Score (1-10)</label>
-                    <input type="number" step="0.1" className="field-input" value={log.qualityScore} onChange={(e) => setLog({...log, qualityScore: Number(e.target.value)})} required />
-                  </div>
-                </div>
+              <div className="panel-header mb-4">
+                <h2 className="panel-title">Record Daily Delivery Log</h2>
+              </div>
+              <form onSubmit={handleLogSubmit} className="grid grid-cols-2 gap-4">
+                <input type="text" className="field-input" placeholder="Supplier ID" value={log.supplierId} onChange={(e) => setLog({...log, supplierId: e.target.value})} required />
+                <input type="datetime-local" className="field-input" placeholder="Date" value={log.date} onChange={(e) => setLog({...log, date: e.target.value})} />
+                <input type="text" className="field-input" placeholder="Vehicle Number" value={log.vehicleNo} onChange={(e) => setLog({...log, vehicleNo: e.target.value})} required />
+                <input type="number" className="field-input" placeholder="Gross Weight (Kg)" value={log.grossWeight} onChange={(e) => setLog({...log, grossWeight: Number(e.target.value)})} required />
+                <input type="number" className="field-input" placeholder="Deduction Weight (Kg)" value={log.deductionWeight} onChange={(e) => setLog({...log, deductionWeight: Number(e.target.value)})} required />
+                <input type="number" step="0.1" className="field-input" placeholder="Quality Score (1-10)" value={log.qualityScore} onChange={(e) => setLog({...log, qualityScore: Number(e.target.value)})} required />
                 <MultiSelectGardens state={log} setter={setLog} />
-                <button type="submit" className="button button-primary" disabled={isSubmitting}>Record Log</button>
+                <div className="col-span-2 flex justify-end">
+                  <button type="submit" className="primary-button" disabled={isSubmitting}>Record Log</button>
+                </div>
               </form>
             </div>
           )}
 
           {activeTab === "analytics" && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div className="panel-header mb-4 flex justify-between items-center">
                 <h2 className="panel-title">Analytics Dashboard</h2>
                 <select className="field-input" style={{ width: '250px' }} value={selectedGardenId} onChange={(e) => setSelectedGardenId(e.target.value)}>
                   <option value="">Select Garden...</option>
@@ -267,43 +223,43 @@ export const BoughtLeafPage: React.FC = () => {
                 </select>
               </div>
 
-              {!selectedGardenId && <p style={{color: 'var(--text-secondary)'}}>Select a garden to load analytics...</p>}
+              {!selectedGardenId && <p className="text-[var(--text-secondary)]">Select a garden to load analytics...</p>}
 
               {selectedGardenId && analyticsData && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="card" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-50)' }}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>Total Bought Weight</h3>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{analyticsData.totalBoughtWeight} Kg</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="panel p-4 bg-[var(--surface-50)]">
+                    <h3 className="text-sm text-[var(--text-secondary)] mb-2">Total Bought Weight</h3>
+                    <div className="text-2xl font-bold">{analyticsData.totalBoughtWeight} Kg</div>
                   </div>
-                  <div className="card" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-50)' }}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>Total Bought Cost</h3>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--danger)' }}>₹{analyticsData.totalBoughtCost}</div>
+                  <div className="panel p-4 bg-[var(--surface-50)]">
+                    <h3 className="text-sm text-[var(--text-secondary)] mb-2">Total Bought Cost</h3>
+                    <div className="text-2xl font-bold text-[var(--danger)]">₹{analyticsData.totalBoughtCost}</div>
                   </div>
-                  <div className="card" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-50)' }}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>Avg Cost Per Kg</h3>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{analyticsData.averageBoughtCostPerKg} / Kg</div>
+                  <div className="panel p-4 bg-[var(--surface-50)]">
+                    <h3 className="text-sm text-[var(--text-secondary)] mb-2">Avg Cost Per Kg</h3>
+                    <div className="text-2xl font-bold">₹{analyticsData.averageBoughtCostPerKg} / Kg</div>
                   </div>
-                  <div className="card" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-50)' }}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>Overall Conversion Ratio</h3>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{analyticsData.factoryContext?.overallConversionRatio}</div>
+                  <div className="panel p-4 bg-[var(--surface-50)]">
+                    <h3 className="text-sm text-[var(--text-secondary)] mb-2">Overall Conversion Ratio</h3>
+                    <div className="text-2xl font-bold text-[var(--primary)]">{analyticsData.factoryContext?.overallConversionRatio}</div>
                   </div>
 
-                  <div className="card" style={{ gridColumn: 'span 2', padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Supplier Leaderboard</h3>
-                    <table className="table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                  <div className="panel col-span-2 p-4">
+                    <h3 className="text-base mb-2">Supplier Leaderboard</h3>
+                    <table className="table w-full text-left">
                       <thead>
                         <tr>
-                          <th style={{ borderBottom: '2px solid var(--border)', padding: '8px' }}>Supplier Name</th>
-                          <th style={{ borderBottom: '2px solid var(--border)', padding: '8px' }}>Total Supplied (Kg)</th>
-                          <th style={{ borderBottom: '2px solid var(--border)', padding: '8px' }}>Avg Quality Score</th>
+                          <th className="border-b-2 border-[var(--border)] p-2">Supplier Name</th>
+                          <th className="border-b-2 border-[var(--border)] p-2">Total Supplied (Kg)</th>
+                          <th className="border-b-2 border-[var(--border)] p-2">Avg Quality Score</th>
                         </tr>
                       </thead>
                       <tbody>
                         {analyticsData.supplierRanking?.map((r, i) => (
                           <tr key={i}>
-                            <td style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>{r.name}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>{r.totalSuppliedKg}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>{r.averageQualityScore} / 10</td>
+                            <td className="p-2 border-b border-[var(--border)]">{r.name}</td>
+                            <td className="p-2 border-b border-[var(--border)]">{r.totalSuppliedKg}</td>
+                            <td className="p-2 border-b border-[var(--border)]">{r.averageQualityScore} / 10</td>
                           </tr>
                         ))}
                       </tbody>

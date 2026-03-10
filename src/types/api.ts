@@ -198,12 +198,14 @@ export interface BatchFetchResponse {
 }
 
 export interface AddPaymentRequest {
+  companyid?: string;
   labourerids: string[];
   ymp: string;
   amounts: number[];
 }
 
 export interface FetchPaymentStatusRequest {
+  companyid?: string;
   labourerids: string[];
   ymp: string;
 }
@@ -223,9 +225,11 @@ export interface MaintenanceRequest {
   title: string;
   model_name: string;
   ids: string[];
-  points: string[];
+  points?: string[];
+  description?: string;
   status: RequestStatus;
   image?: string;
+  docsList?: string[];
 }
 
 export interface RequestLabourer {
@@ -247,7 +251,8 @@ export interface RequestEmployee {
 
 export interface RequestsFetchItem {
   _id: string;
-  points: string[];
+  points?: string[];
+  description?: string;
   status: RequestStatus;
   gardenid: string;
   title: string;
@@ -255,6 +260,7 @@ export interface RequestsFetchItem {
   labourers?: RequestLabourer[];
   employees?: RequestEmployee[];
   image?: string;
+  docsList?: string[];
 }
 
 export type ExpenseStatus = "unpaid" | "paid";
@@ -265,10 +271,12 @@ export interface Expense {
   date: string;
   title: string;
   req_id: string | null;
-  points: string[];
+  points?: string[];
+  description?: string;
   amount?: number;
   status: ExpenseStatus;
   image?: string;
+  docsList?: string[];
 }
 
 export interface RewardUpdates {
@@ -300,7 +308,8 @@ export interface Task {
   gardenid: string;
   title: string;
   date: string;
-  points: string[];
+  points?: string[];
+  description?: string;
   status: "not_started" | "under_progress" | "completed";
 }
 

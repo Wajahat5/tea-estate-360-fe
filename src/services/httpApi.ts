@@ -135,6 +135,7 @@ type RawEmployee = {
 
 type RawLabourer = {
   id?: string;
+  _id?: string;
   labourerid?: string;
   name: string;
   type: "permanent" | "casual" | "temporary";
@@ -269,14 +270,19 @@ export const httpApi = {
         throw new Error("Login response did not include an auth token");
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
+      const mappedGardens = ((rawUser as any).gardens || []).map((g: any) => ({
+        gardenid: g.id || g.gardenid,
+        name: g.name || g.id || g.gardenid
+      }));
+
       const user: User = {
         userid: rawUser.id,
         db_role: rawUser.db_role,
-        gardens: (rawUser as any).gardens,
-        gardenid: rawUser.gardenid,
+        gardens: mappedGardens.length > 0 ? mappedGardens : undefined,
+        gardenid: rawUser.gardenid || (rawUser as any).gardenId,
         name: rawUser.name,
         phone: rawUser.phone,
-        profession: rawUser.profession,
+        profession: rawUser.profession ? rawUser.profession.toLowerCase() : "",
         email: rawUser.email,
         image: rawUser.image
       };
@@ -304,13 +310,19 @@ export const httpApi = {
         throw new Error("Create user response did not include an auth token");
       }
       const rawUser = ((raw as any).user ?? (raw as any).data?.user ?? raw) as RawUser;
+      const mappedGardens = ((rawUser as any).gardens || []).map((g: any) => ({
+        gardenid: g.id || g.gardenid,
+        name: g.name || g.id || g.gardenid
+      }));
+
       const user: User = {
         userid: rawUser.id,
         db_role: rawUser.db_role,
-        gardenid: rawUser.gardenid,
+        gardens: mappedGardens.length > 0 ? mappedGardens : undefined,
+        gardenid: rawUser.gardenid || (rawUser as any).gardenId,
         name: rawUser.name,
         phone: rawUser.phone,
-        profession: rawUser.profession,
+        profession: rawUser.profession ? rawUser.profession.toLowerCase() : "",
         email: rawUser.email,
         image: rawUser.image
       };
@@ -403,7 +415,7 @@ export const httpApi = {
       });
       return raw.map(
         (company): CompanyListItem => ({
-          companyid: company.id,
+          companyid: company.id || (company as any)._id || (company as any).companyid,
           name: company.name,
           state: company.state,
           district: company.district,
@@ -416,12 +428,12 @@ export const httpApi = {
           image: company.image,
           access_requests: company.access_requests,
           gardens: (company.gardens || []).map((garden) => ({
-            gardenid: garden.id,
+            gardenid: garden.id || (garden as any).gardenid,
             name: garden.name,
             state: garden.state,
             district: garden.district,
             pincode: garden.pincode,
-            companyid: garden.companyid
+            companyid: garden.companyid || (garden as any).companyId
           }))
         })
       );
@@ -450,7 +462,7 @@ export const httpApi = {
       });
       return raw.map(
         (item): Labourer => ({
-          labourerid: item.labourerid || item.id || "",
+          labourerid: item.labourerid || item.id || item._id || "",
           name: item.name,
           type: item.type,
           gardenid: item.gardenid,

@@ -237,7 +237,12 @@ export const LabourersPage = () => {
   };
 
   const getCompanyIdByGardenId = (gid: string) => {
-    return companies[0]?.companyid || ""; // The actual garden -> company mapping logic can be handled centrally. Gardens associated with user usually don't have companyid directly in `user.gardens` array.
+    for (const company of companies) {
+      if (company.gardens.some(g => g.gardenid === gid)) {
+        return company.companyid;
+      }
+    }
+    return companies[0]?.companyid || "";
   };
 
   const handleFetchPayroll = async () => {
@@ -279,6 +284,7 @@ export const LabourersPage = () => {
       const ymp = `${payrollYear}-${payrollMonth}-${payrollPart}`;
       const labourerids = labourers.map(l => l.labourerid);
       const resp = await apiService.earnings.fetchPaymentStatus({
+        companyid: getCompanyIdByGardenId(gardenid),
         labourerids,
         ymp
       });
@@ -311,6 +317,7 @@ export const LabourersPage = () => {
       const amounts = selectedLabourerIds.map(id => payrollData[id]?.total_earned || 0);
 
       await apiService.earnings.addPayment({
+        companyid: getCompanyIdByGardenId(gardenid),
         labourerids: selectedLabourerIds,
         ymp,
         amounts

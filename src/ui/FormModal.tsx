@@ -541,7 +541,6 @@ export const FormModal = ({
          }
       } else if (type === "request" && onCreateRequest && onUpdateRequest) {
          const ids = requestFormData.ids.split(",").map(id => id.trim()).filter(id => id.length > 0);
-         const parsedPoints = requestFormData.description.split("\n").map(p => p.trim()).filter(p => p.length > 0);
          const payload = {
             requestid: request ? request.requestid : "",
             title: requestFormData.title.trim(),
@@ -555,7 +554,6 @@ export const FormModal = ({
          if (mode === "create") await onCreateRequest(payload);
          else await onUpdateRequest(payload, imageFile, removeImage);
       } else if (type === "expense" && onCreateExpense && onUpdateExpense) {
-         const parsedPoints = expenseFormData.description.split("\n").map(p => p.trim()).filter(p => p.length > 0);
          const payload = {
             expenseid: expense ? expense.expenseid : "",
             gardenid: expenseFormData.gardenid,
@@ -569,7 +567,6 @@ export const FormModal = ({
          if (mode === "create") await onCreateExpense(payload);
          else await onUpdateExpense(payload, imageFile, removeImage);
       } else if (type === "task" && onCreateTask && onUpdateTask) {
-         const parsedPoints = taskFormData.description.split("\n").map(p => p.trim()).filter(p => p.length > 0);
          if (mode === "create") {
             await onCreateTask({
                 gardenid: taskFormData.gardenid,

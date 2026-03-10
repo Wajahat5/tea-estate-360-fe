@@ -160,7 +160,7 @@ export const CompaniesPage = () => {
     }))
   );
 
-  if (user?.profession !== 'owner' && companies.length === 0) {
+  if (user?.profession?.toLowerCase() !== 'owner' && companies.length === 0) {
     // If not an owner and blocked, the DashboardLayout will render AccessBlockedModal.
     // We can just return empty here to avoid showing "All companies" header underneath the modal.
     return null;
@@ -207,7 +207,7 @@ export const CompaniesPage = () => {
       <div className="panel">
         <div className="panel-header">
           <h2 className="panel-title">All companies</h2>
-          {user?.profession === 'owner' && (
+          {user?.profession?.toLowerCase() === 'owner' && (
             <button
               type="button"
               className="primary-button"

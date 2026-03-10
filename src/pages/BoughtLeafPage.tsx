@@ -165,22 +165,10 @@ export const BoughtLeafPage: React.FC = () => {
                 <h2 className="panel-title">Add External Supplier</h2>
               </div>
               <form onSubmit={handleSupplierSubmit} className="grid grid-cols-2 gap-4">
-                <div className="field-group">
-                  <label className="field-label">Supplier Name</label>
-                  <input type="text" className="field-input" value={supplier.name} onChange={(e) => setSupplier({...supplier, name: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Supplier Code (Unique)</label>
-                  <input type="text" className="field-input" value={supplier.supplierCode} onChange={(e) => setSupplier({...supplier, supplierCode: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Phone</label>
-                  <input type="text" className="field-input" value={supplier.phone} onChange={(e) => setSupplier({...supplier, phone: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Address</label>
-                  <input type="text" className="field-input" value={supplier.address} onChange={(e) => setSupplier({...supplier, address: e.target.value})} required />
-                </div>
+                <input type="text" className="field-input" placeholder="Supplier Name" value={supplier.name} onChange={(e) => setSupplier({...supplier, name: e.target.value})} required />
+                <input type="text" className="field-input" placeholder="Supplier Code (Unique)" value={supplier.supplierCode} onChange={(e) => setSupplier({...supplier, supplierCode: e.target.value})} required />
+                <input type="text" className="field-input" placeholder="Phone" value={supplier.phone} onChange={(e) => setSupplier({...supplier, phone: e.target.value})} required />
+                <input type="text" className="field-input" placeholder="Address" value={supplier.address} onChange={(e) => setSupplier({...supplier, address: e.target.value})} required />
                 <MultiSelectGardens state={supplier} setter={setSupplier} />
                 <div className="col-span-2 flex justify-end">
                   <button type="submit" className="primary-button" disabled={isSubmitting}>Save Supplier</button>
@@ -195,14 +183,8 @@ export const BoughtLeafPage: React.FC = () => {
                 <h2 className="panel-title">Set Bought Leaf Price (Rate Card)</h2>
               </div>
               <form onSubmit={handlePriceSubmit} className="grid grid-cols-2 gap-4">
-                <div className="field-group">
-                  <label className="field-label">Effective Date</label>
-                  <input type="date" className="field-input" value={price.effectiveDate} onChange={(e) => setPrice({...price, effectiveDate: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Price Per Kg (₹)</label>
-                  <input type="number" step="0.01" className="field-input" value={price.pricePerKg} onChange={(e) => setPrice({...price, pricePerKg: Number(e.target.value)})} required />
-                </div>
+                <input type="date" className="field-input" placeholder="Effective Date" value={price.effectiveDate} onChange={(e) => setPrice({...price, effectiveDate: e.target.value})} required />
+                <input type="number" step="0.01" className="field-input" placeholder="Price Per Kg (₹)" value={price.pricePerKg} onChange={(e) => setPrice({...price, pricePerKg: Number(e.target.value)})} required />
                 <MultiSelectGardens state={price} setter={setPrice} />
                 <div className="col-span-2 flex justify-end">
                   <button type="submit" className="primary-button" disabled={isSubmitting}>Set Price</button>
@@ -217,30 +199,12 @@ export const BoughtLeafPage: React.FC = () => {
                 <h2 className="panel-title">Record Daily Delivery Log</h2>
               </div>
               <form onSubmit={handleLogSubmit} className="grid grid-cols-2 gap-4">
-                <div className="field-group">
-                  <label className="field-label">Supplier ID</label>
-                  <input type="text" className="field-input" value={log.supplierId} onChange={(e) => setLog({...log, supplierId: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Date</label>
-                  <input type="datetime-local" className="field-input" value={log.date} onChange={(e) => setLog({...log, date: e.target.value})} />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Vehicle Number</label>
-                  <input type="text" className="field-input" value={log.vehicleNo} onChange={(e) => setLog({...log, vehicleNo: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Gross Weight (Kg)</label>
-                  <input type="number" className="field-input" value={log.grossWeight} onChange={(e) => setLog({...log, grossWeight: Number(e.target.value)})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Deduction Weight (Kg)</label>
-                  <input type="number" className="field-input" value={log.deductionWeight} onChange={(e) => setLog({...log, deductionWeight: Number(e.target.value)})} required />
-                </div>
-                <div className="field-group">
-                  <label className="field-label">Quality Score (1-10)</label>
-                  <input type="number" step="0.1" className="field-input" value={log.qualityScore} onChange={(e) => setLog({...log, qualityScore: Number(e.target.value)})} required />
-                </div>
+                <input type="text" className="field-input" placeholder="Supplier ID" value={log.supplierId} onChange={(e) => setLog({...log, supplierId: e.target.value})} required />
+                <input type="datetime-local" className="field-input" placeholder="Date" value={log.date} onChange={(e) => setLog({...log, date: e.target.value})} />
+                <input type="text" className="field-input" placeholder="Vehicle Number" value={log.vehicleNo} onChange={(e) => setLog({...log, vehicleNo: e.target.value})} required />
+                <input type="number" className="field-input" placeholder="Gross Weight (Kg)" value={log.grossWeight} onChange={(e) => setLog({...log, grossWeight: Number(e.target.value)})} required />
+                <input type="number" className="field-input" placeholder="Deduction Weight (Kg)" value={log.deductionWeight} onChange={(e) => setLog({...log, deductionWeight: Number(e.target.value)})} required />
+                <input type="number" step="0.1" className="field-input" placeholder="Quality Score (1-10)" value={log.qualityScore} onChange={(e) => setLog({...log, qualityScore: Number(e.target.value)})} required />
                 <MultiSelectGardens state={log} setter={setLog} />
                 <div className="col-span-2 flex justify-end">
                   <button type="submit" className="primary-button" disabled={isSubmitting}>Record Log</button>
